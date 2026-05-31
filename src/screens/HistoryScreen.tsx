@@ -1,17 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { StyleSheet, FlatList, View, Alert } from "react-native";
 import { List, IconButton, Text } from "react-native-paper";
+import { useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { getBottles, deleteBottle } from "../storage/bottleStorage";
 import ScreenWrapper from "../components/ScreenWrapper";
+
+const refreshBottles = () =>
+  getBottles().then((bottles) =>
+    bottles.sort((a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+  );
 
 type HistoryScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, "Historique">;
 };
 
 type Bottle = {
-  id: number;
+  id: string;
   quantity: number;
   timestamp: string;
   notes: string;
@@ -26,16 +34,13 @@ const formatDate = (isoString: string) => {
 const HistoryScreen: React.FC<HistoryScreenProps> = () => {
   const [bottles, setBottles] = useState<Bottle[]>([]);
 
-  useEffect(() => {
-    loadBottles();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      refreshBottles().then(setBottles);
+    }, [])
+  );
 
-  const loadBottles = async () => {
-    const storedBottles = await getBottles();
-    setBottles(storedBottles);
-  };
-
-  const handleDeleteBottle = async (id: number) => {
+  const handleDeleteBottle = async (id: string) => {
     Alert.alert(
       "Supprimer le biberon",
       "Êtes-vous sûr de vouloir supprimer ce biberon ?",
@@ -49,7 +54,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = () => {
           style: "destructive",
           onPress: async () => {
             await deleteBottle(id);
-            loadBottles();
+            refreshBottles().then(setBottles);
           }
         }
       ],

@@ -1,48 +1,61 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from "expo-crypto";
+
+type Bottle = {
+  id: string;
+  quantity: number;
+  timestamp: string;
+  notes: string;
+};
+
+const isBottle = (obj: unknown): obj is Bottle =>
+  typeof obj === 'object' &&
+  obj !== null &&
+  typeof (obj as Record<string, unknown>).id === 'string' &&
+  typeof (obj as Record<string, unknown>).quantity === 'number' &&
+  typeof (obj as Record<string, unknown>).timestamp === 'string';
 
 // Sauvegarder un biberon avec date et heure
 export const saveBottle = async (quantity: string, date: Date, notes?: string) => {
   try {
     if (!quantity || isNaN(Number(quantity))) {
-      console.error("Quantité invalide :", quantity);
-      return;
+      throw new Error("Quantité invalide : " + quantity);
     }
 
     const bottles = await getBottles();
     const newBottle = {
-      id: Date.now(),
+      id: Crypto.randomUUID(),
       quantity: Number(quantity),
       timestamp: date.toISOString(),
       notes: notes || "",
     };
     bottles.push(newBottle);
-    
+
     await AsyncStorage.setItem("bottles", JSON.stringify(bottles));
-    console.log("Biberon sauvegardé :", newBottle);
   } catch (error) {
-    console.error("Erreur lors de la sauvegarde :", error);
+    throw error;
   }
 };
 
 // Récupérer tous les biberons
-export const getBottles = async (): Promise<{ id: number; quantity: number; timestamp: string; notes: string }[]> => {
+export const getBottles = async (): Promise<Bottle[]> => {
   try {
     const bottles = await AsyncStorage.getItem("bottles");
-    return bottles ? JSON.parse(bottles) : [];
+    return bottles
+      ? (JSON.parse(bottles) as unknown[]).filter(isBottle)
+      : [];
   } catch (error) {
-    console.error("Erreur lors de la récupération :", error);
-    return [];
+    throw error;
   }
 };
 
 // Supprimer un biberon par ID
-export const deleteBottle = async (id: number) => {
+export const deleteBottle = async (id: string) => {
   try {
     let bottles = await getBottles();
     bottles = bottles.filter(bottle => bottle.id !== id);
     await AsyncStorage.setItem("bottles", JSON.stringify(bottles));
-    console.log("Biberon supprimé :", id);
   } catch (error) {
-    console.error("Erreur lors de la suppression :", error);
+    throw error;
   }
 };

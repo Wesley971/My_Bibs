@@ -29,11 +29,15 @@ const AddBottleScreen: React.FC<AddBottleScreenProps> = ({ navigation }) => {
       return;
     }
 
-    await saveBottle(quantity, date, notes);
-    setQuantity("");
-    setNotes("");
-    setDate(new Date());
-    showSnackbar("Biberon ajouté avec succès !", 'success');
+    try {
+      await saveBottle(quantity, date, notes);
+      setQuantity("");
+      setNotes("");
+      setDate(new Date());
+      showSnackbar("Biberon ajouté avec succès !", 'success');
+    } catch (e) {
+      showSnackbar("Erreur lors de la sauvegarde. Veuillez réessayer.", 'error');
+    }
   };
 
   const showSnackbar = (message: string, type: SnackbarType) => {
@@ -46,7 +50,7 @@ const AddBottleScreen: React.FC<AddBottleScreenProps> = ({ navigation }) => {
     if (snackbarType === 'error') {
       return { backgroundColor: theme.colors.error };
     }
-    return { backgroundColor: '#4CAF50' }; // Vert pour le succès
+    return { backgroundColor: theme.colors.primary };
   };
 
   return (
