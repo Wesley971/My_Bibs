@@ -1,5 +1,5 @@
 import React from "react";
-import { SafeAreaView, StatusBar } from "react-native";
+import { StatusBar } from "react-native";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { PaperProvider, DefaultTheme } from "react-native-paper";
 
