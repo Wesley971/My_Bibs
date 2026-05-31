@@ -34,22 +34,6 @@ const AppNavigator = () => {
             tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
           }}
         >
-        <Tab.Screen 
-          name="Ajout" 
-          component={AddBottleScreen} 
-          options={{ 
-            title: "My Bibs", 
-            tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="baby-bottle-outline" color={color} size={size} />
-          }}
-        />
-        <Tab.Screen 
-          name="Historique" 
-          component={HistoryScreen} 
-          options={{ 
-            title: "Historique", 
-            tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="history" color={color} size={size} />
-          }} 
-        />
         <Tab.Screen
           name="Accueil"
           component={HomeScreen}
@@ -58,13 +42,29 @@ const AppNavigator = () => {
             tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="home-outline" color={color} size={size} />
           }}
         />
-        <Tab.Screen 
+        <Tab.Screen
+          name="Ajout"
+          component={AddBottleScreen}
+          options={{
+            title: "My Bibs",
+            tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="baby-bottle-outline" color={color} size={size} />
+          }}
+        />
+        <Tab.Screen
+          name="Historique"
+          component={HistoryScreen}
+          options={{
+            title: "Historique",
+            tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="history" color={color} size={size} />
+          }}
+        />
+        <Tab.Screen
           name="Scan"
           component={ScanScreen}
-          options={{ 
-            title: "Scan", 
+          options={{
+            title: "Scan",
             tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="barcode-scan" color={color} size={size} />
-          }} 
+          }}
         />
       </Tab.Navigator>
     </NavigationContainer>
