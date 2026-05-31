@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
-  StyleSheet, SectionList, View, Text,
-  TouchableOpacity, Alert,
+  StyleSheet, SectionList, View, Text, TouchableOpacity,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { useFocusEffect } from "@react-navigation/native";
 import { getBottles, deleteBottle } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
@@ -22,9 +22,9 @@ const MONTH_NAMES = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function dayLabel(dateStr: string): string {
-  const d       = new Date(dateStr);
-  const today   = new Date().toDateString();
-  const yest    = new Date(Date.now() - 86400000).toDateString();
+  const d     = new Date(dateStr);
+  const today = new Date().toDateString();
+  const yest  = new Date(Date.now() - 86400000).toDateString();
   if (d.toDateString() === today) return `Aujourd'hui · ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
   if (d.toDateString() === yest)  return `Hier · ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
   return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
@@ -65,6 +65,44 @@ function QtyBadge({ qty }: { qty: number }) {
   );
 }
 
+// ── BibRow avec Swipeable ──────────────────────────────────────────────────────
+function BibRow({ item, onDelete }: { item: Bottle; onDelete: () => void }) {
+  const swipeRef = useRef<Swipeable>(null);
+
+  const renderRightActions = () => (
+    <TouchableOpacity
+      style={s.deleteAction}
+      onPress={() => {
+        swipeRef.current?.close();
+        onDelete();
+      }}
+    >
+      <Text style={s.deleteActionIcon}>🗑</Text>
+      <Text style={s.deleteActionText}>Suppr.</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <Swipeable
+      ref={swipeRef}
+      renderRightActions={renderRightActions}
+      friction={2}
+      rightThreshold={40}
+      overshootRight={false}
+    >
+      <View style={s.bibRow}>
+        <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
+        <Text style={s.bottleIcon}>🍼</Text>
+        <View style={s.bibInfo}>
+          <Text style={s.bibName}>Biberon</Text>
+          {item.notes ? <Text style={s.bibNote}>{item.notes}</Text> : null}
+        </View>
+        <QtyBadge qty={item.quantity} />
+      </View>
+    </Swipeable>
+  );
+}
+
 // ── Écran ──────────────────────────────────────────────────────────────────────
 export default function HistoryScreen() {
   const [sections, setSections] = useState<DaySection[]>([]);
@@ -75,23 +113,12 @@ export default function HistoryScreen() {
 
   useFocusEffect(reload);
 
-  const weekTotal = sections
-    .slice(0, 7)
-    .reduce((s, g) => s + g.total, 0);
-
+  const weekTotal = sections.slice(0, 7).reduce((s, g) => s + g.total, 0);
   const now = new Date();
 
-  function confirmDelete(id: string) {
-    Alert.alert(
-      'Supprimer',
-      'Supprimer ce biberon ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive',
-          onPress: async () => { await deleteBottle(id); reload(); } },
-      ],
-      { cancelable: true },
-    );
+  async function handleDelete(id: string) {
+    await deleteBottle(id);
+    reload();
   }
 
   return (
@@ -102,7 +129,6 @@ export default function HistoryScreen() {
       keyExtractor={item => item.id}
       showsVerticalScrollIndicator={false}
 
-      // ── En-tête global ─────────────────────────────────────
       ListHeaderComponent={() => (
         <View style={s.headerRow}>
           <View>
@@ -110,7 +136,7 @@ export default function HistoryScreen() {
             <Text style={s.weekTotal}>{weekTotal} ml cette semaine</Text>
           </View>
           <View style={s.monthBadge}>
-            <Text style={s.calIcon}>◷</Text>
+            <Text style={s.calIcon}>📅</Text>
             <Text style={s.monthLabel}>
               {MONTH_NAMES[now.getMonth()].charAt(0).toUpperCase()
                 + MONTH_NAMES[now.getMonth()].slice(1)} {now.getFullYear()}
@@ -123,7 +149,6 @@ export default function HistoryScreen() {
         <Text style={s.empty}>Aucun biberon enregistré.</Text>
       )}
 
-      // ── Bandeau par jour ────────────────────────────────────
       renderSectionHeader={({ section }) => (
         <View style={s.dayHeader}>
           <Text style={s.dayLabel}>{section.title}</Text>
@@ -137,22 +162,8 @@ export default function HistoryScreen() {
         </View>
       )}
 
-      // ── Ligne biberon ───────────────────────────────────────
       renderItem={({ item }) => (
-        <View style={s.bibRow}>
-          <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
-          <Text style={s.bottleIcon}>🍼</Text>
-          <View style={s.bibInfo}>
-            <Text style={s.bibName}>Biberon</Text>
-            {item.notes ? (
-              <Text style={s.bibNote}>{item.notes}</Text>
-            ) : null}
-          </View>
-          <QtyBadge qty={item.quantity} />
-          <TouchableOpacity onPress={() => confirmDelete(item.id)} style={s.deleteBtn}>
-            <Text style={s.deleteIcon}>🗑</Text>
-          </TouchableOpacity>
-        </View>
+        <BibRow item={item} onDelete={() => handleDelete(item.id)} />
       )}
 
       SectionSeparatorComponent={() => <View style={{ height: spacing.md }} />}
@@ -166,24 +177,22 @@ const s = StyleSheet.create({
   scroll:  { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
 
-  // En-tête global
   headerRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'flex-start', marginBottom: 18, paddingTop: 6,
   },
   h2:        { fontSize: 28, fontWeight: '900', color: colors.text },
   weekTotal: { ...typography.small, color: colors.muted, marginTop: 2 },
-  monthBadge:{
+  monthBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: colors.card, borderRadius: 20,
     paddingVertical: 6, paddingHorizontal: 12, marginTop: 4,
   },
-  calIcon:    { fontSize: 13, color: colors.muted },
+  calIcon:    { fontSize: 12 },
   monthLabel: { ...typography.caption, fontWeight: '600', color: colors.muted },
 
   empty: { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 40 },
 
-  // Bandeau jour
   dayHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 10, paddingHorizontal: 14,
@@ -210,16 +219,24 @@ const s = StyleSheet.create({
     backgroundColor: colors.card,
     paddingVertical: 11, paddingHorizontal: 13,
   },
-  bibTime:     { ...typography.caption, color: colors.muted, minWidth: 38 },
-  bottleIcon:  { fontSize: 15 },
-  bibInfo:     { flex: 1 },
-  bibName:     { fontSize: 13, fontWeight: '600', color: colors.text },
-  bibNote:     { fontSize: 11, color: colors.muted, fontStyle: 'italic', marginTop: 1 },
-
-  deleteBtn:   { padding: 4 },
-  deleteIcon:  { fontSize: 15 },
+  bibTime:    { ...typography.caption, color: colors.muted, minWidth: 38 },
+  bottleIcon: { fontSize: 15 },
+  bibInfo:    { flex: 1 },
+  bibName:    { fontSize: 13, fontWeight: '600', color: colors.text },
+  bibNote:    { fontSize: 11, color: colors.muted, fontStyle: 'italic', marginTop: 1 },
 
   itemSep: { height: 2, backgroundColor: colors.bg },
+
+  // Panneau de suppression (swipe)
+  deleteAction: {
+    backgroundColor: colors.error,
+    width: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  deleteActionIcon: { fontSize: 16 },
+  deleteActionText: { ...typography.label, color: 'white' },
 
   // Badge quantité
   badge: {

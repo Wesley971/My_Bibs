@@ -214,7 +214,7 @@ const s = StyleSheet.create({
   // FAB
   fab: {
     position: 'absolute',
-    bottom: 24, right: 20,
+    bottom: 90, right: 20,
     width: 52, height: 52, borderRadius: 26,
     backgroundColor: colors.accent,
     alignItems: 'center', justifyContent: 'center',
