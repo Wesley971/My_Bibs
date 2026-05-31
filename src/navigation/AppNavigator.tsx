@@ -1,8 +1,9 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
+import { colors } from "../theme/colors";
 import AddBottleScreen from "../screens/AddBottleScreen";
 import HistoryScreen from "../screens/HistoryScreen";
-import StatsScreen from "../screens/StatsScreen";
+import HomeScreen from "../screens/HomeScreen";
 import ScanScreen from "../screens/ScanScreen";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,7 +21,19 @@ const Tab = createBottomTabNavigator();
 const AppNavigator = () => {
   return (
     <NavigationContainer>
-      <Tab.Navigator screenOptions={{ headerShown: false }}>
+      <Tab.Navigator
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: {
+              backgroundColor: colors.navBg,
+              borderTopColor: colors.border,
+              borderTopWidth: 1,
+            },
+            tabBarActiveTintColor:   colors.accent,
+            tabBarInactiveTintColor: colors.muted,
+            tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
+          }}
+        >
         <Tab.Screen 
           name="Ajout" 
           component={AddBottleScreen} 
@@ -37,13 +50,13 @@ const AppNavigator = () => {
             tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="history" color={color} size={size} />
           }} 
         />
-        <Tab.Screen 
-          name="Statistiques" 
-          component={StatsScreen} 
-          options={{ 
-            title: "Statistiques", 
-            tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="chart-bar" color={color} size={size} />
-          }} 
+        <Tab.Screen
+          name="Accueil"
+          component={HomeScreen}
+          options={{
+            title: "Accueil",
+            tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="home-outline" color={color} size={size} />
+          }}
         />
         <Tab.Screen 
           name="Scan"
