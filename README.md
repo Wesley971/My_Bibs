@@ -4,43 +4,54 @@ Application mobile de suivi de biberons pour bébé, développée avec **React N
 
 Conçue pour les parents qui se relaient la nuit — interface sombre et apaisante, saisie rapide, historique clair.
 
+**Statut : V1 fonctionnelle**
+
 ---
 
 ## 📱 Fonctionnalités
 
-| Fonction                                                   | Statut |
-| ---------------------------------------------------------- | ------ |
-| Écran d'accueil avec total du jour et barre de progression | ✅     |
-| Sélecteur de quantité −/+ avec chips rapides (60–210 ml)   | ✅     |
-| Champ heure avec bouton "Maintenant"                       | ✅     |
-| Notes optionnelles par biberon                             | ✅     |
-| Historique groupé par jour avec badges colorés             | ✅     |
-| Swipe gauche pour supprimer une entrée                     | ✅     |
-| Scanner QR code pour enregistrer un biberon                | ✅     |
-| Stockage local persistant (AsyncStorage)                   | ✅     |
-| IDs uniques via UUID (expo-crypto)                         | ✅     |
-| Design system dark lavande (src/theme/)                    | ✅     |
-| Écran statistiques                                         | 🔜     |
-| Animations (barre de progression, chips, FadeInDown)       | 🔜     |
-| Police Nunito (expo-google-fonts)                          | 🔜     |
-| Fond étoilé global                                         | 🔜     |
+| Fonction | Statut |
+|---|---|
+| Onboarding au premier lancement (prénom + objectif journalier) | ✅ |
+| Écran d'accueil — total du jour, barre de progression, refresh minuit | ✅ |
+| Sélecteur de quantité −/+ avec chips rapides (60–210 ml) | ✅ |
+| Champ heure avec bouton "Maintenant" | ✅ |
+| Notes optionnelles par biberon | ✅ |
+| Modification d'un biberon existant depuis l'historique | ✅ |
+| Historique groupé par jour avec badges colorés | ✅ |
+| Suppression d'un biberon par swipe gauche | ✅ |
+| Paramètres modifiables (prénom, objectif journalier) | ✅ |
+| Stockage local persistant (AsyncStorage) | ✅ |
+| IDs uniques via UUID (expo-crypto) | ✅ |
+| Fond étoilé animé global (Reanimated) | ✅ |
+| Police Nunito (expo-google-fonts) | ✅ |
+| Animations de listes (fade + slide) | ✅ |
+| Thème dark lavande — design system complet | ✅ |
+| Clavier géré sur tous les écrans (KeyboardAwareScrollView) | ✅ |
+| Scanner QR code | ✅ |
+| Statistiques hebdomadaires | 🔜 |
+| Notifications de rappel | 🔜 |
 
 ---
 
-## 🛠 Technologies
+## 🛠 Stack technique
 
-- [React Native](https://reactnative.dev/) + [Expo SDK 54](https://expo.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [React Navigation](https://reactnavigation.org/) (Bottom Tabs)
-- [AsyncStorage](https://github.com/react-native-async-storage/async-storage) (persistance locale)
-- [expo-crypto](https://docs.expo.dev/versions/latest/sdk/crypto/) (UUID)
-- [expo-camera](https://docs.expo.dev/versions/latest/sdk/camera/) (scan QR)
-- [react-native-gesture-handler](https://docs.swmansion.com/react-native-gesture-handler/) (swipe-to-delete)
-- [react-native-reanimated](https://docs.swmansion.com/react-native-reanimated/) (animations, à venir)
+| Couche | Technologie | Version |
+|---|---|---|
+| Framework | React Native + Expo | SDK 54 / RN 0.81.5 |
+| Langage | TypeScript | 5.3 |
+| Navigation | React Navigation — Stack + Bottom Tabs | 7.x |
+| Animations | React Native Reanimated | 4.1 |
+| Clavier | react-native-keyboard-aware-scroll-view | 0.9 |
+| Persistance | AsyncStorage | 2.2 |
+| UUID | expo-crypto | 15.x |
+| Police | expo-google-fonts / Nunito | 0.4 |
+| Caméra | expo-camera | 17.x |
+| Gestures | react-native-gesture-handler | 2.28 |
 
 ---
 
-## ⚙️ Installation
+## ⚙️ Installation & lancement
 
 ```bash
 git clone https://github.com/Wesley971/My_Bibs.git
@@ -49,8 +60,8 @@ npm install
 npx expo start
 ```
 
-Scanne le QR code avec **Expo Go** (SDK 54) sur ton téléphone Android ou iOS.
-Assure-toi que ton téléphone et ton PC sont sur le même réseau WiFi.
+Scanne le QR code avec **Expo Go** (SDK 54) sur Android ou iOS.
+Téléphone et PC doivent être sur le même réseau WiFi.
 
 ---
 
@@ -58,42 +69,57 @@ Assure-toi que ton téléphone et ton PC sont sur le même réseau WiFi.
 
 ```
 My_Bibs/
-├── App.tsx                        # Entrée principale — GestureHandlerRootView
-├── app.json                       # Config Expo
-├── tsconfig.json                  # Config TypeScript
+├── App.tsx                          # Entrée — GestureHandlerRootView + StarfieldBackground
+├── app.json                         # Config Expo
+├── tsconfig.json                    # Config TypeScript
 │
 └── src/
-    ├── screens/
-    │   ├── HomeScreen.tsx         # Accueil — total jour, progression, liste
-    │   ├── AddBottleScreen.tsx    # Ajout — sélecteur −/+, chips, heure, notes
-    │   ├── HistoryScreen.tsx      # Historique — groupé par jour, swipe-to-delete
-    │   ├── ScanScreen.tsx         # Scan QR code — enregistrement automatique
-    │   └── StatsScreen.tsx        # Statistiques (à venir)
-    ├── navigation/
-    │   └── AppNavigator.tsx       # Bottom Tab Navigator
-    ├── storage/
-    │   └── bottleStorage.ts       # CRUD AsyncStorage + type guard + UUID
+    ├── config/
+    │   └── constants.ts             # Valeurs partagées (DAILY_GOAL_DEFAULT, seuils badges)
     ├── components/
-    │   └── ScreenWrapper.tsx      # Wrapper global — fond dark, StatusBar light
+    │   └── StarfieldBackground.tsx  # Fond étoilé animé (Reanimated, absoluteFill)
+    ├── navigation/
+    │   └── AppNavigator.tsx         # Stack (Tabs / Paramètres / Édition) + Bottom Tabs
+    ├── screens/
+    │   ├── HomeScreen.tsx           # Accueil — total jour, progression, liste biberons
+    │   ├── AddBottleScreen.tsx      # Ajout / Modification biberon (mode dual)
+    │   ├── HistoryScreen.tsx        # Historique groupé par jour, swipe-to-delete
+    │   ├── OnboardingScreen.tsx     # Premier lancement — prénom + objectif (2 étapes)
+    │   ├── SettingsScreen.tsx       # Paramètres — prénom et objectif modifiables
+    │   ├── ScanScreen.tsx           # Scanner QR code
+    │   └── StatsScreen.tsx          # Statistiques (placeholder V2)
+    ├── storage/
+    │   ├── bottleStorage.ts         # CRUD biberons (save / get / update / delete)
+    │   └── settingsStorage.ts       # Paramètres utilisateur (childName, dailyGoal)
     └── theme/
-        ├── colors.ts              # Tokens de couleur (dark lavande)
-        ├── spacing.ts             # Échelle d'espacement (xs → xxxl)
-        └── typography.ts          # Styles de texte (display, hero, body...)
+        ├── colors.ts                # Tokens couleur dark lavande (#16213E, #A78BFA…)
+        ├── spacing.ts               # Échelle d'espacement (xs → xxxl)
+        └── typography.ts            # Styles texte (display, hero, body, label…)
 ```
 
 ---
 
-## 🎨 Design System
+## 🎨 Design system
 
-L'app utilise un thème **dark lavande** défini dans `src/theme/`, conçu pour être agréable à utiliser la nuit sans agresser les yeux.
+Thème **dark lavande** défini dans `src/theme/` — agréable la nuit, sans agresser les yeux.
 
-Les couleurs principales sont le fond `#16213E` (bleu nuit profond), l'accent `#A78BFA` (lavande vif), les cartes en `#1F2B47`, et le texte principal en `#F8F8FF`. Toutes les couleurs sont centralisées dans `colors.ts` pour faciliter la maintenance — changer une teinte se fait en une seule ligne.
+| Token | Valeur | Rôle |
+|---|---|---|
+| `bg` | `#16213E` | Fond principal |
+| `card` | `#1F2B47` | Cartes, lignes de liste |
+| `accent` | `#A78BFA` | Lavande — boutons, progression, actif |
+| `acL` | `#C4B5FD` | Lavande clair — labels secondaires |
+| `text` | `#F8F8FF` | Texte principal |
+| `success` | `#34D399` | Confirmation enregistrement |
 
 ---
 
-## 🔒 Qualité du code
+## 🗺 Roadmap V2
 
-Le projet a fait l'objet d'un audit complet avec les corrections suivantes : remplacement de `Date.now()` par des UUIDs via `expo-crypto`, propagation des erreurs de storage vers l'UI via `throw`, utilisation de `useFocusEffect` pour le rafraîchissement de l'historique, tri newest-first, type guard sur `JSON.parse()`, et suppression de tous les imports morts.
+- [ ] Statistiques hebdomadaires (graphiques SVG natifs)
+- [ ] Notifications de rappel configurables
+- [ ] Export des données (CSV / PDF)
+- [ ] Publication App Store & Google Play
 
 ---
 
