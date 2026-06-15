@@ -10,9 +10,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Définition des types pour la navigation
 export type RootStackParamList = {
+  Accueil: undefined;
   Ajout: undefined;
   Historique: undefined;
-  Statistiques: undefined;
+  Scan: undefined;
 };
 
 const Tab = createBottomTabNavigator();

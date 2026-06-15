@@ -1,7 +1,10 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  AppState, View, Text, ScrollView, TouchableOpacity, StyleSheet,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle, useSharedValue, withDelay, withTiming,
+} from "react-native-reanimated";
 import { useFocusEffect } from "@react-navigation/native";
 import { getBottles } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
@@ -38,19 +41,101 @@ function QtyBadge({ qty }: { qty: number }) {
   );
 }
 
+// ── HomeBibRow — FadeIn + slideUp avec délai progressif ───────────────────────
+function HomeBibRow({ item, index, triggerKey }: { item: Bottle; index: number; triggerKey: number }) {
+  const opacity    = useSharedValue(0);
+  const translateY = useSharedValue(20);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  useEffect(() => {
+    opacity.value    = 0;
+    translateY.value = 20;
+    const delay = index * 60;
+    opacity.value    = withDelay(delay, withTiming(1, { duration: 300 }));
+    translateY.value = withDelay(delay, withTiming(0, { duration: 300 }));
+  }, [triggerKey]);
+
+  return (
+    <Animated.View style={animStyle}>
+      <View style={s.bibRow}>
+        <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
+        <Text style={s.bottleIcon}>🍼</Text>
+        <Text style={s.bibName}>Biberon</Text>
+        <QtyBadge qty={item.quantity} />
+        <Text style={s.chevron}>›</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 // ── Écran ──────────────────────────────────────────────────────────────────────
 export default function HomeScreen({ navigation }: any) {
-  const [bottles, setBottles] = useState<Bottle[]>([]);
+  const [bottles,  setBottles]  = useState<Bottle[]>([]);
+  const [focusKey, setFocusKey] = useState(0);
 
-  useFocusEffect(useCallback(() => {
+  const cardOpacity   = useSharedValue(0);
+  const cardAnimStyle = useAnimatedStyle(() => ({ opacity: cardOpacity.value }));
+  const currentDayRef = useRef(new Date().toDateString());
+
+  const loadBottles = useCallback(() => {
     getBottles().then(all => {
       const todayStr = new Date().toDateString();
       const today = all
         .filter(b => new Date(b.timestamp).toDateString() === todayStr)
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setBottles(today);
+      setFocusKey(k => k + 1);
     });
-  }, []));
+  }, []);
+
+  // Anime la card une seule fois au montage initial
+  useEffect(() => {
+    cardOpacity.value = withDelay(150, withTiming(1, { duration: 400 }));
+  }, []);
+
+  // Recharge les données + déclenche l'animation des items à chaque focus
+  useFocusEffect(useCallback(() => {
+    loadBottles();
+  }, [loadBottles]));
+
+  // Mécanisme 1 — refresh automatique à minuit exact
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    function scheduleNextMidnight() {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const msUntilMidnight = midnight.getTime() - now.getTime();
+
+      timeoutId = setTimeout(() => {
+        loadBottles();
+        scheduleNextMidnight();
+      }, msUntilMidnight);
+    }
+
+    scheduleNextMidnight();
+    return () => clearTimeout(timeoutId);
+  }, [loadBottles]);
+
+  // Mécanisme 2 — refresh si l'app revient au premier plan un jour différent
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        const today = new Date().toDateString();
+        if (today !== currentDayRef.current) {
+          currentDayRef.current = today;
+          loadBottles();
+        }
+      }
+    });
+
+    return () => subscription.remove();
+  }, [loadBottles]);
 
   // ── Calculs ──
   const total    = bottles.reduce((sum, b) => sum + b.quantity, 0);
@@ -83,7 +168,7 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         {/* ── Carte Total du jour ── */}
-        <View style={s.card}>
+        <Animated.View style={[s.card, cardAnimStyle]}>
           <Text style={s.sectionLabel}>TOTAL DU JOUR</Text>
 
           <View style={s.totalRow}>
@@ -108,7 +193,7 @@ export default function HomeScreen({ navigation }: any) {
             </Text>
             <Text style={s.pctText}>{pct} %</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* ── Biberons du jour ── */}
         <View style={s.section}>
@@ -122,14 +207,8 @@ export default function HomeScreen({ navigation }: any) {
           {bottles.length === 0 ? (
             <Text style={s.empty}>Aucun biberon enregistré aujourd'hui.</Text>
           ) : (
-            bottles.map(b => (
-              <View key={b.id} style={s.bibRow}>
-                <Text style={s.bibTime}>{timeStr(b.timestamp)}</Text>
-                <Text style={s.bottleIcon}>🍼</Text>
-                <Text style={s.bibName}>Biberon</Text>
-                <QtyBadge qty={b.quantity} />
-                <Text style={s.chevron}>›</Text>
-              </View>
+            bottles.map((b, idx) => (
+              <HomeBibRow key={b.id} item={b} index={idx} triggerKey={focusKey} />
             ))
           )}
         </View>
@@ -151,7 +230,7 @@ export default function HomeScreen({ navigation }: any) {
 const s = StyleSheet.create({
   root:    { flex: 1, backgroundColor: 'transparent' },
   scroll:  { flex: 1, backgroundColor: 'transparent' },
-  content: { paddingBottom: 100 }, // espace pour le FAB
+  content: { paddingBottom: 100 },
 
   // Header
   header:   { padding: spacing.lg, paddingBottom: spacing.xl },

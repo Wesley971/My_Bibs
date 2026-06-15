@@ -3,6 +3,9 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   TextInput, StyleSheet, Platform,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle, useSharedValue, withSpring,
+} from "react-native-reanimated";
 import { saveBottle } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -20,6 +23,11 @@ export default function AddBottleScreen({ navigation }: any) {
   const [note,  setNote] = useState('');
   const [saved, setSaved] = useState(false);
 
+  const saveScale    = useSharedValue(1);
+  const saveAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: saveScale.value }],
+  }));
+
   function setNow() { setTime(fmt(new Date())); }
 
   async function handleSave() {
@@ -34,7 +42,6 @@ export default function AddBottleScreen({ navigation }: any) {
         setQty(120);
         setNote('');
         setNow();
-        navigation.navigate('Ajout');
       }, 950);
     } catch { /* ignore */ }
   }
@@ -48,9 +55,6 @@ export default function AddBottleScreen({ navigation }: any) {
     >
       {/* ── Header ── */}
       <View style={s.headerRow}>
-        <TouchableOpacity onPress={() => navigation.navigate('Ajout')} style={s.backBtn}>
-          <Text style={s.backIcon}>‹</Text>
-        </TouchableOpacity>
         <View>
           <Text style={s.headerTitle}>Nouveau biberon</Text>
           <Text style={s.headerSub}>Ajout rapide</Text>
@@ -125,15 +129,19 @@ export default function AddBottleScreen({ navigation }: any) {
       </View>
 
       {/* ── Bouton Enregistrer ── */}
-      <TouchableOpacity
-        onPress={handleSave}
-        style={[s.saveBtn, saved && s.saveBtnSuccess]}
-        activeOpacity={0.85}
-      >
-        <Text style={s.saveBtnText}>
-          {saved ? '✓  Enregistré !' : 'Enregistrer'}
-        </Text>
-      </TouchableOpacity>
+      <Animated.View style={saveAnimStyle}>
+        <TouchableOpacity
+          onPress={handleSave}
+          onPressIn={() => { saveScale.value = withSpring(0.95); }}
+          onPressOut={() => { saveScale.value = withSpring(1.0); }}
+          style={[s.saveBtn, saved && s.saveBtnSuccess]}
+          activeOpacity={0.85}
+        >
+          <Text style={s.saveBtnText}>
+            {saved ? '✓  Enregistré !' : 'Enregistrer'}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
     </ScrollView>
   );
 }

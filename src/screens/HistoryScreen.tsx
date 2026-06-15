@@ -1,7 +1,10 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   StyleSheet, SectionList, View, Text, TouchableOpacity,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle, useSharedValue, withDelay, withTiming,
+} from "react-native-reanimated";
 import { Swipeable } from "react-native-gesture-handler";
 import { useFocusEffect } from "@react-navigation/native";
 import { getBottles, deleteBottle } from "../storage/bottleStorage";
@@ -66,8 +69,21 @@ function QtyBadge({ qty }: { qty: number }) {
 }
 
 // ── BibRow avec Swipeable ──────────────────────────────────────────────────────
-function BibRow({ item, onDelete }: { item: Bottle; onDelete: () => void }) {
-  const swipeRef = useRef<Swipeable>(null);
+function BibRow({ item, onDelete, index }: { item: Bottle; onDelete: () => void; index: number }) {
+  const swipeRef  = useRef<Swipeable>(null);
+  const opacity   = useSharedValue(0);
+  const translateY = useSharedValue(20);
+
+  useEffect(() => {
+    const delay = index * 60;
+    opacity.value    = withDelay(delay, withTiming(1,  { duration: 300 }));
+    translateY.value = withDelay(delay, withTiming(0,  { duration: 300 }));
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
 
   const renderRightActions = () => (
     <TouchableOpacity
@@ -83,23 +99,25 @@ function BibRow({ item, onDelete }: { item: Bottle; onDelete: () => void }) {
   );
 
   return (
-    <Swipeable
-      ref={swipeRef}
-      renderRightActions={renderRightActions}
-      friction={2}
-      rightThreshold={40}
-      overshootRight={false}
-    >
-      <View style={s.bibRow}>
-        <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
-        <Text style={s.bottleIcon}>🍼</Text>
-        <View style={s.bibInfo}>
-          <Text style={s.bibName}>Biberon</Text>
-          {item.notes ? <Text style={s.bibNote}>{item.notes}</Text> : null}
+    <Animated.View style={animStyle}>
+      <Swipeable
+        ref={swipeRef}
+        renderRightActions={renderRightActions}
+        friction={2}
+        rightThreshold={40}
+        overshootRight={false}
+      >
+        <View style={s.bibRow}>
+          <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
+          <Text style={s.bottleIcon}>🍼</Text>
+          <View style={s.bibInfo}>
+            <Text style={s.bibName}>Biberon</Text>
+            {item.notes ? <Text style={s.bibNote}>{item.notes}</Text> : null}
+          </View>
+          <QtyBadge qty={item.quantity} />
         </View>
-        <QtyBadge qty={item.quantity} />
-      </View>
-    </Swipeable>
+      </Swipeable>
+    </Animated.View>
   );
 }
 
@@ -162,8 +180,8 @@ export default function HistoryScreen() {
         </View>
       )}
 
-      renderItem={({ item }) => (
-        <BibRow item={item} onDelete={() => handleDelete(item.id)} />
+      renderItem={({ item, index }) => (
+        <BibRow item={item} onDelete={() => handleDelete(item.id)} index={index} />
       )}
 
       SectionSeparatorComponent={() => <View style={{ height: spacing.md }} />}
