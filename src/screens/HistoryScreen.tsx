@@ -8,6 +8,8 @@ import Animated, {
 import { Swipeable } from "react-native-gesture-handler";
 import { useFocusEffect } from "@react-navigation/native";
 import { getBottles, deleteBottle } from "../storage/bottleStorage";
+import { getSettings } from "../storage/settingsStorage";
+import { DAILY_GOAL_DEFAULT, BADGE_GREEN_MIN, BADGE_ORANGE_MAX } from "../config/constants";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography, fonts } from "../theme/typography";
@@ -17,7 +19,6 @@ type Bottle = { id: string; quantity: number; timestamp: string; notes: string }
 type DaySection = { title: string; total: number; pct: number; data: Bottle[] };
 
 // ── Constantes ─────────────────────────────────────────────────────────────────
-const DAILY_GOAL = 800;
 const MONTH_NAMES = [
   'janvier','février','mars','avril','mai','juin',
   'juillet','août','septembre','octobre','novembre','décembre',
@@ -33,7 +34,7 @@ function dayLabel(dateStr: string): string {
   return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function groupByDay(bottles: Bottle[]): DaySection[] {
+function groupByDay(bottles: Bottle[], dailyGoal: number): DaySection[] {
   const map = new Map<string, Bottle[]>();
   for (const b of bottles) {
     const key = new Date(b.timestamp).toDateString();
@@ -45,7 +46,7 @@ function groupByDay(bottles: Bottle[]): DaySection[] {
     .map(([key, bibs]) => {
       bibs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       const total = bibs.reduce((s, b) => s + b.quantity, 0);
-      const pct   = Math.min(100, Math.round((total / DAILY_GOAL) * 100));
+      const pct   = Math.min(100, Math.round((total / dailyGoal) * 100));
       return { title: dayLabel(key), total, pct, data: bibs };
     });
 }
@@ -57,7 +58,7 @@ function timeStr(iso: string): string {
 
 // ── QtyBadge ───────────────────────────────────────────────────────────────────
 function QtyBadge({ qty }: { qty: number }) {
-  const good = qty >= 130, low = qty <= 75;
+  const good = qty >= BADGE_GREEN_MIN, low = qty <= BADGE_ORANGE_MAX;
   const bg   = good ? colors.goodBg  : low ? colors.lowBg  : 'rgba(167,139,250,0.18)';
   const bdr  = good ? colors.goodBdr : low ? colors.lowBdr : 'rgba(167,139,250,0.35)';
   const col  = good ? colors.goodText: low ? colors.lowText: colors.acL;
@@ -126,7 +127,9 @@ export default function HistoryScreen() {
   const [sections, setSections] = useState<DaySection[]>([]);
 
   const reload = useCallback(() => {
-    getBottles().then(all => setSections(groupByDay(all)));
+    Promise.all([getBottles(), getSettings()]).then(([all, s]) => {
+      setSections(groupByDay(all, s.dailyGoal));
+    });
   }, []);
 
   useFocusEffect(reload);

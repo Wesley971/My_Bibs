@@ -7,12 +7,13 @@ import Animated, {
 } from "react-native-reanimated";
 import { useFocusEffect } from "@react-navigation/native";
 import { getBottles } from "../storage/bottleStorage";
+import { getSettings, Settings } from "../storage/settingsStorage";
+import { DAILY_GOAL_DEFAULT, BADGE_GREEN_MIN, BADGE_ORANGE_MAX } from "../config/constants";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography, fonts } from "../theme/typography";
 
 // ── Constantes ─────────────────────────────────────────────────────────────────
-const DAILY_GOAL = 800;
 const DAY_NAMES   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 const MONTH_NAMES = [
   'janvier','février','mars','avril','mai','juin',
@@ -30,7 +31,7 @@ function timeStr(iso: string): string {
 
 // ── QtyBadge ───────────────────────────────────────────────────────────────────
 function QtyBadge({ qty }: { qty: number }) {
-  const good = qty >= 130, low = qty <= 75;
+  const good = qty >= BADGE_GREEN_MIN, low = qty <= BADGE_ORANGE_MAX;
   const bg  = good ? colors.goodBg  : low ? colors.lowBg  : 'rgba(167,139,250,0.18)';
   const bdr = good ? colors.goodBdr : low ? colors.lowBdr : 'rgba(167,139,250,0.35)';
   const col = good ? colors.goodText: low ? colors.lowText: colors.acL;
@@ -76,6 +77,9 @@ function HomeBibRow({ item, index, triggerKey }: { item: Bottle; index: number; 
 export default function HomeScreen({ navigation }: any) {
   const [bottles,  setBottles]  = useState<Bottle[]>([]);
   const [focusKey, setFocusKey] = useState(0);
+  const [settings, setSettings] = useState<Settings>({
+    childName: 'bébé', dailyGoal: DAILY_GOAL_DEFAULT, isOnboardingDone: true,
+  });
 
   const cardOpacity   = useSharedValue(0);
   const cardAnimStyle = useAnimatedStyle(() => ({ opacity: cardOpacity.value }));
@@ -97,9 +101,10 @@ export default function HomeScreen({ navigation }: any) {
     cardOpacity.value = withDelay(150, withTiming(1, { duration: 400 }));
   }, []);
 
-  // Recharge les données + déclenche l'animation des items à chaque focus
+  // Recharge les données + settings à chaque focus
   useFocusEffect(useCallback(() => {
     loadBottles();
+    getSettings().then(setSettings);
   }, [loadBottles]));
 
   // Mécanisme 1 — refresh automatique à minuit exact
@@ -139,16 +144,17 @@ export default function HomeScreen({ navigation }: any) {
 
   // ── Calculs ──
   const total    = bottles.reduce((sum, b) => sum + b.quantity, 0);
-  const pct      = Math.min(100, Math.round((total / DAILY_GOAL) * 100));
+  const pct      = Math.min(100, Math.round((total / settings.dailyGoal) * 100));
   const lastTime = bottles[0] ? timeStr(bottles[0].timestamp) : '--';
 
   // ── Salutation contextuelle ──
-  const now = new Date();
-  const h   = now.getHours();
+  const now  = new Date();
+  const h    = now.getHours();
+  const name = settings.childName || 'bébé';
   const greet    = h < 6 || h >= 21 ? 'Bonne nuit,' : h < 12 ? 'Bonjour,' : 'Bon après-midi,';
   const subtitle = h < 6 || h >= 21
     ? 'Tout se passe bien, dors tranquille ✨'
-    : 'Tout va bien, Leo est en pleine forme ✨';
+    : `Tout va bien, ${name} est en pleine forme ✨`;
   const dateStr  =
     `${DAY_NAMES[now.getDay()]}, ${now.getDate()} ${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`;
 
@@ -161,9 +167,17 @@ export default function HomeScreen({ navigation }: any) {
       >
         {/* ── Header ── */}
         <View style={s.header}>
-          <Text style={s.dateLabel}>{dateStr}</Text>
+          <View style={s.headerTopRow}>
+            <Text style={s.dateLabel}>{dateStr}</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Paramètres')}
+              style={s.settingsBtn}
+            >
+              <Text style={s.settingsIcon}>⚙️</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={s.greet}>{greet}</Text>
-          <Text style={s.name}>Leo</Text>
+          <Text style={s.name}>{name}</Text>
           <Text style={s.subtitle}>{subtitle}</Text>
         </View>
 
@@ -178,7 +192,7 @@ export default function HomeScreen({ navigation }: any) {
             </View>
             <View style={s.goalBox}>
               <Text style={s.goalLabel}>Objectif</Text>
-              <Text style={s.goalNum}>{DAILY_GOAL} ml</Text>
+              <Text style={s.goalNum}>{settings.dailyGoal} ml</Text>
             </View>
           </View>
 
@@ -226,7 +240,10 @@ const s = StyleSheet.create({
 
   // Header
   header:   { padding: spacing.lg, paddingBottom: spacing.xl },
-  dateLabel:{ ...typography.caption, color: colors.muted, marginBottom: 5 },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
+  settingsBtn:  { padding: 4 },
+  settingsIcon: { fontSize: 18 },
+  dateLabel:{ ...typography.caption, color: colors.muted },
   greet:    { ...typography.caption, color: colors.muted, fontWeight: '500' },
   name:     { fontFamily: fonts.extraBold, fontSize: 40, fontWeight: '900', color: colors.text, lineHeight: 44, letterSpacing: -0.5, marginTop: 1 },
   subtitle: { ...typography.small, color: colors.muted, marginTop: 4 },
