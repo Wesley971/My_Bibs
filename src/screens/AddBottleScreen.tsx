@@ -6,7 +6,7 @@ import {
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring,
 } from "react-native-reanimated";
-import { saveBottle } from "../storage/bottleStorage";
+import { saveBottle, updateBottle, Bottle } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography, fonts } from "../theme/typography";
@@ -17,10 +17,13 @@ function fmt(d: Date) {
   return `${d.getHours()}h${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-export default function AddBottleScreen({ navigation }: any) {
-  const [qty,   setQty]  = useState(120);
-  const [time,  setTime] = useState(() => fmt(new Date()));
-  const [note,  setNote] = useState('');
+export default function AddBottleScreen({ navigation, route }: any) {
+  const bottle: Bottle | undefined = route?.params?.bottle;
+  const isEditing = Boolean(bottle);
+
+  const [qty,   setQty]  = useState(bottle ? bottle.quantity : 120);
+  const [time,  setTime] = useState(() => bottle ? fmt(new Date(bottle.timestamp)) : fmt(new Date()));
+  const [note,  setNote] = useState(bottle ? bottle.notes : '');
   const [saved, setSaved] = useState(false);
 
   const saveScale    = useSharedValue(1);
@@ -33,16 +36,28 @@ export default function AddBottleScreen({ navigation }: any) {
   async function handleSave() {
     try {
       const [hStr, mStr] = time.replace('h', ':').split(':');
-      const n = new Date();
-      const date = new Date(n.getFullYear(), n.getMonth(), n.getDate(), Number(hStr), Number(mStr));
-      await saveBottle(String(qty), date, note);
-      setSaved(true);
-      setTimeout(() => {
-        setSaved(false);
-        setQty(120);
-        setNote('');
-        setNow();
-      }, 950);
+      if (isEditing && bottle) {
+        // Préserve la date d'origine, met à jour l'heure uniquement
+        const orig = new Date(bottle.timestamp);
+        const editedDate = new Date(
+          orig.getFullYear(), orig.getMonth(), orig.getDate(),
+          Number(hStr), Number(mStr),
+        );
+        await updateBottle(bottle.id, qty, editedDate.toISOString(), note);
+        setSaved(true);
+        setTimeout(() => { setSaved(false); navigation.goBack(); }, 950);
+      } else {
+        const n = new Date();
+        const date = new Date(n.getFullYear(), n.getMonth(), n.getDate(), Number(hStr), Number(mStr));
+        await saveBottle(String(qty), date, note);
+        setSaved(true);
+        setTimeout(() => {
+          setSaved(false);
+          setQty(120);
+          setNote('');
+          setNow();
+        }, 950);
+      }
     } catch { /* ignore */ }
   }
 
@@ -56,8 +71,8 @@ export default function AddBottleScreen({ navigation }: any) {
       {/* ── Header ── */}
       <View style={s.headerRow}>
         <View>
-          <Text style={s.headerTitle}>Nouveau biberon</Text>
-          <Text style={s.headerSub}>Ajout rapide</Text>
+          <Text style={s.headerTitle}>{isEditing ? 'Modifier le biberon' : 'Nouveau biberon'}</Text>
+          <Text style={s.headerSub}>{isEditing ? 'Mise à jour' : 'Ajout rapide'}</Text>
         </View>
       </View>
 
@@ -138,7 +153,7 @@ export default function AddBottleScreen({ navigation }: any) {
           activeOpacity={0.85}
         >
           <Text style={s.saveBtnText}>
-            {saved ? '✓  Enregistré !' : 'Enregistrer'}
+            {saved ? '✓  Enregistré !' : isEditing ? 'Modifier' : 'Enregistrer'}
           </Text>
         </TouchableOpacity>
       </Animated.View>

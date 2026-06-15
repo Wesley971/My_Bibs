@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from "../theme/colors";
 import { isFirstLaunch } from "../storage/settingsStorage";
+import { Bottle } from "../storage/bottleStorage";
 import AddBottleScreen from "../screens/AddBottleScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -17,6 +18,7 @@ import SettingsScreen from "../screens/SettingsScreen";
 export type RootStackParamList = {
   Tabs: undefined;
   Paramètres: undefined;
+  Édition: { bottle: Bottle };
 };
 
 export type TabParamList = {
@@ -125,6 +127,19 @@ const AppNavigator = () => {
         <Stack.Screen
           name="Paramètres"
           component={SettingsScreen}
+          options={{
+            transitionSpec: {
+              open:  { animation: 'timing', config: { duration: 280 } },
+              close: { animation: 'timing', config: { duration: 220 } },
+            },
+            cardStyleInterpolator: ({ current }) => ({
+              cardStyle: { opacity: current.progress },
+            }),
+          }}
+        />
+        <Stack.Screen
+          name="Édition"
+          component={AddBottleScreen}
           options={{
             transitionSpec: {
               open:  { animation: 'timing', config: { duration: 280 } },

@@ -67,7 +67,6 @@ function HomeBibRow({ item, index, triggerKey }: { item: Bottle; index: number; 
         <Text style={s.bottleIcon}>🍼</Text>
         <Text style={s.bibName}>Biberon</Text>
         <QtyBadge qty={item.quantity} />
-        <Text style={s.chevron}>›</Text>
       </View>
     </Animated.View>
   );
@@ -291,7 +290,7 @@ const s = StyleSheet.create({
   bibTime:    { ...typography.small, color: colors.muted, minWidth: 42 },
   bottleIcon: { fontSize: 16 },
   bibName:    { fontFamily: fonts.semiBold, flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
-  chevron:    { fontSize: 18, color: colors.muted },
+
 
   empty: { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 24 },
 

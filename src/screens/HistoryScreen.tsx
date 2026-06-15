@@ -70,7 +70,7 @@ function QtyBadge({ qty }: { qty: number }) {
 }
 
 // ── BibRow avec Swipeable ──────────────────────────────────────────────────────
-function BibRow({ item, onDelete, index }: { item: Bottle; onDelete: () => void; index: number }) {
+function BibRow({ item, onDelete, onPress, index }: { item: Bottle; onDelete: () => void; onPress: () => void; index: number }) {
   const swipeRef  = useRef<Swipeable>(null);
   const opacity   = useSharedValue(0);
   const translateY = useSharedValue(20);
@@ -108,7 +108,7 @@ function BibRow({ item, onDelete, index }: { item: Bottle; onDelete: () => void;
         rightThreshold={40}
         overshootRight={false}
       >
-        <View style={s.bibRow}>
+        <TouchableOpacity style={s.bibRow} onPress={onPress} activeOpacity={0.7}>
           <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
           <Text style={s.bottleIcon}>🍼</Text>
           <View style={s.bibInfo}>
@@ -116,14 +116,15 @@ function BibRow({ item, onDelete, index }: { item: Bottle; onDelete: () => void;
             {item.notes ? <Text style={s.bibNote}>{item.notes}</Text> : null}
           </View>
           <QtyBadge qty={item.quantity} />
-        </View>
+          <Text style={s.chevron}>›</Text>
+        </TouchableOpacity>
       </Swipeable>
     </Animated.View>
   );
 }
 
 // ── Écran ──────────────────────────────────────────────────────────────────────
-export default function HistoryScreen() {
+export default function HistoryScreen({ navigation }: any) {
   const [sections, setSections] = useState<DaySection[]>([]);
 
   const reload = useCallback(() => {
@@ -184,7 +185,12 @@ export default function HistoryScreen() {
       )}
 
       renderItem={({ item, index }) => (
-        <BibRow item={item} onDelete={() => handleDelete(item.id)} index={index} />
+        <BibRow
+          item={item}
+          onDelete={() => handleDelete(item.id)}
+          onPress={() => navigation.navigate('Édition', { bottle: item })}
+          index={index}
+        />
       )}
 
       SectionSeparatorComponent={() => <View style={{ height: spacing.md }} />}
@@ -245,6 +251,7 @@ const s = StyleSheet.create({
   bibInfo:    { flex: 1 },
   bibName:    { fontFamily: fonts.semiBold, fontSize: 13, fontWeight: '600', color: colors.text },
   bibNote:    { fontSize: 11, color: colors.muted, fontStyle: 'italic', marginTop: 1 },
+  chevron:    { fontSize: 18, color: colors.muted },
 
   itemSep: { height: 2, backgroundColor: colors.bg },
 

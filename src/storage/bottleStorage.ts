@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Crypto from "expo-crypto";
 
-type Bottle = {
+export type Bottle = {
   id: string;
   quantity: number;
   timestamp: string;
@@ -44,6 +44,24 @@ export const getBottles = async (): Promise<Bottle[]> => {
     return bottles
       ? (JSON.parse(bottles) as unknown[]).filter(isBottle)
       : [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Modifier un biberon existant par ID
+export const updateBottle = async (
+  id: string,
+  quantity: number,
+  timestamp: string,
+  notes: string,
+): Promise<void> => {
+  try {
+    const bottles = await getBottles();
+    const updated = bottles.map(b =>
+      b.id === id ? { ...b, quantity, timestamp, notes } : b
+    );
+    await AsyncStorage.setItem("bottles", JSON.stringify(updated));
   } catch (error) {
     throw error;
   }
