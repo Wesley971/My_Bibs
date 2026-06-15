@@ -214,14 +214,6 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       </ScrollView>
 
-      {/* ── FAB + ── */}
-      <TouchableOpacity
-        style={s.fab}
-        onPress={() => navigation.navigate('Ajout')}
-        activeOpacity={0.85}
-      >
-        <Text style={s.fabIcon}>+</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -287,20 +279,8 @@ const s = StyleSheet.create({
   empty: { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 24 },
 
   // Badge quantité
+
   badge:     { borderWidth: 1, borderRadius: 10, paddingVertical: 3, paddingHorizontal: 10 },
   badgeText: { fontFamily: fonts.bold, fontSize: 12, fontWeight: '700' },
 
-  // FAB
-  fab: {
-    position: 'absolute',
-    bottom: 90, right: 20,
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: colors.accent,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: colors.accent,
-    shadowOpacity: 0.55, shadowRadius: 11,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-  },
-  fabIcon: { color: 'white', fontSize: 28, lineHeight: 32, marginTop: -2 },
 });

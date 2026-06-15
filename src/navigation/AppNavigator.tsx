@@ -1,4 +1,5 @@
 import React from "react";
+import { View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { colors } from "../theme/colors";
 import AddBottleScreen from "../screens/AddBottleScreen";
@@ -48,8 +49,21 @@ const AppNavigator = () => {
           name="Ajout"
           component={AddBottleScreen}
           options={{
-            title: "My Bibs",
-            tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="baby-bottle-outline" color={color} size={size} />
+            tabBarLabel: '',
+            tabBarItemStyle: { marginBottom: 10 },
+            tabBarIcon: () => (
+              <View style={{
+                width: 60, height: 60, borderRadius: 30,
+                backgroundColor: colors.accent,
+                alignItems: 'center', justifyContent: 'center',
+                shadowColor: colors.accent,
+                shadowOpacity: 0.5, shadowRadius: 8,
+                shadowOffset: { width: 0, height: 3 },
+                elevation: 6,
+              }}>
+                <MaterialCommunityIcons name="baby-bottle-outline" color="white" size={28} />
+              </View>
+            ),
           }}
         />
         <Tab.Screen
