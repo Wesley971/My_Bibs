@@ -7,7 +7,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { getBottles, deleteBottle } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
-import { typography } from "../theme/typography";
+import { typography, fonts } from "../theme/typography";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Bottle = { id: string; quantity: number; timestamp: string; notes: string };
@@ -181,7 +181,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'flex-start', marginBottom: 18, paddingTop: 6,
   },
-  h2:        { fontSize: 28, fontWeight: '900', color: colors.text },
+  h2:        { fontFamily: fonts.extraBold, fontSize: 28, fontWeight: '900', color: colors.text },
   weekTotal: { ...typography.small, color: colors.muted, marginTop: 2 },
   monthBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -211,7 +211,7 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(167,139,250,0.16)', borderRadius: 10,
     paddingVertical: 3, paddingHorizontal: 10,
   },
-  dayTotalText: { fontSize: 12, fontWeight: '700', color: colors.acL },
+  dayTotalText: { fontFamily: fonts.bold, fontSize: 12, fontWeight: '700', color: colors.acL },
 
   // Ligne biberon
   bibRow: {
@@ -222,7 +222,7 @@ const s = StyleSheet.create({
   bibTime:    { ...typography.caption, color: colors.muted, minWidth: 38 },
   bottleIcon: { fontSize: 15 },
   bibInfo:    { flex: 1 },
-  bibName:    { fontSize: 13, fontWeight: '600', color: colors.text },
+  bibName:    { fontFamily: fonts.semiBold, fontSize: 13, fontWeight: '600', color: colors.text },
   bibNote:    { fontSize: 11, color: colors.muted, fontStyle: 'italic', marginTop: 1 },
 
   itemSep: { height: 2, backgroundColor: colors.bg },
@@ -243,5 +243,5 @@ const s = StyleSheet.create({
     borderWidth: 1, borderRadius: 10,
     paddingVertical: 3, paddingHorizontal: 10,
   },
-  badgeText: { fontSize: 12, fontWeight: '700' },
+  badgeText: { fontFamily: fonts.bold, fontSize: 12, fontWeight: '700' },
 });

@@ -6,7 +6,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { getBottles } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
-import { typography } from "../theme/typography";
+import { typography, fonts } from "../theme/typography";
 
 // ── Constantes ─────────────────────────────────────────────────────────────────
 const DAILY_GOAL = 800;
@@ -157,7 +157,7 @@ const s = StyleSheet.create({
   header:   { padding: spacing.lg, paddingBottom: spacing.xl },
   dateLabel:{ ...typography.caption, color: colors.muted, marginBottom: 5 },
   greet:    { ...typography.caption, color: colors.muted, fontWeight: '500' },
-  name:     { fontSize: 40, fontWeight: '900', color: colors.text, lineHeight: 44, letterSpacing: -0.5, marginTop: 1 },
+  name:     { fontFamily: fonts.extraBold, fontSize: 40, fontWeight: '900', color: colors.text, lineHeight: 44, letterSpacing: -0.5, marginTop: 1 },
   subtitle: { ...typography.small, color: colors.muted, marginTop: 4 },
 
   // Carte total
@@ -176,11 +176,11 @@ const s = StyleSheet.create({
   },
   totalRow:  { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 },
   totalLeft: { flexDirection: 'row', alignItems: 'flex-end', gap: 7 },
-  totalNum:  { fontSize: 56, fontWeight: '900', color: colors.text, lineHeight: 56 },
-  totalUnit: { fontSize: 19, fontWeight: '700', color: colors.acL, paddingBottom: 4 },
+  totalNum:  { fontFamily: fonts.extraBold, fontSize: 56, fontWeight: '900', color: colors.text, lineHeight: 56 },
+  totalUnit: { fontFamily: fonts.bold,      fontSize: 19, fontWeight: '700', color: colors.acL, paddingBottom: 4 },
   goalBox:   { alignItems: 'flex-end', paddingBottom: 4 },
   goalLabel: { ...typography.label, color: colors.muted, marginBottom: 2 },
-  goalNum:   { fontSize: 17, fontWeight: '800', color: colors.text },
+  goalNum:   { fontFamily: fonts.extraBold, fontSize: 17, fontWeight: '800', color: colors.text },
 
   progressBg:   { backgroundColor: 'rgba(167,139,250,0.12)', borderRadius: 99, height: 6, overflow: 'hidden', marginBottom: 10 },
   progressFill: { height: '100%', borderRadius: 99, backgroundColor: colors.accent },
@@ -191,7 +191,7 @@ const s = StyleSheet.create({
   // Section biberons
   section:       { paddingHorizontal: spacing.lg },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle:  { fontSize: 17, fontWeight: '800', color: colors.text },
+  sectionTitle:  { fontFamily: fonts.extraBold, fontSize: 17, fontWeight: '800', color: colors.text },
   seeAll:        { ...typography.small, color: colors.accent, fontWeight: '700' },
 
   bibRow: {
@@ -202,14 +202,14 @@ const s = StyleSheet.create({
   },
   bibTime:    { ...typography.small, color: colors.muted, minWidth: 42 },
   bottleIcon: { fontSize: 16 },
-  bibName:    { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
+  bibName:    { fontFamily: fonts.semiBold, flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
   chevron:    { fontSize: 18, color: colors.muted },
 
   empty: { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 24 },
 
   // Badge quantité
   badge:     { borderWidth: 1, borderRadius: 10, paddingVertical: 3, paddingHorizontal: 10 },
-  badgeText: { fontSize: 12, fontWeight: '700' },
+  badgeText: { fontFamily: fonts.bold, fontSize: 12, fontWeight: '700' },
 
   // FAB
   fab: {

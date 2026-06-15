@@ -7,7 +7,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { saveBottle } from '../storage/bottleStorage';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
+import { typography, fonts } from '../theme/typography';
 
 // ── Taille du cadre QR ────────────────────────────────────────────────────────
 const FRAME = 216;
@@ -172,7 +172,7 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   closeIcon:    { color: colors.text, fontSize: 14 },
-  headerTitle:  { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 4 },
+  headerTitle:  { fontFamily: fonts.extraBold, fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 4 },
   headerSub:    { ...typography.small, color: colors.muted, marginBottom: 36 },
 
   // Cadre QR
@@ -214,7 +214,7 @@ const s = StyleSheet.create({
   },
 
   // Instructions
-  instruction:    { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4, textAlign: 'center' },
+  instruction:    { fontFamily: fonts.bold, fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4, textAlign: 'center' },
   instructionSub: { ...typography.caption, color: colors.muted, marginBottom: 32, textAlign: 'center' },
 
   // Séparateur
@@ -229,7 +229,7 @@ const s = StyleSheet.create({
     borderWidth: 1.5, borderColor: colors.accent,
     borderRadius: 14, alignItems: 'center',
   },
-  manualBtnText: { fontSize: 15, fontWeight: '700', color: colors.text },
+  manualBtnText: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: colors.text },
 
   // Permission
   permContainer: {
@@ -243,7 +243,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, borderRadius: 12,
     paddingVertical: 12, paddingHorizontal: 24,
   },
-  permBtnText: { fontSize: 15, fontWeight: '700', color: 'white' },
+  permBtnText: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: 'white' },
 
   // Résultat
   resultContainer: {
@@ -252,5 +252,5 @@ const s = StyleSheet.create({
     gap: 16, paddingHorizontal: 32,
   },
   resultIcon: { fontSize: 48 },
-  resultText: { fontSize: 18, fontWeight: '700', color: colors.text },
+  resultText: { fontFamily: fonts.bold, fontSize: 18, fontWeight: '700', color: colors.text },
 });

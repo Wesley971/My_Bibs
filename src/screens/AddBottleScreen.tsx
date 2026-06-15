@@ -6,7 +6,7 @@ import {
 import { saveBottle } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
-import { typography } from "../theme/typography";
+import { typography, fonts } from "../theme/typography";
 
 const CHIPS = [60, 90, 120, 150, 180, 210];
 
@@ -153,7 +153,7 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   backIcon:    { color: colors.text, fontSize: 24, lineHeight: 30, marginTop: -2 },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  headerTitle: { fontFamily: fonts.extraBold, fontSize: 20, fontWeight: '800', color: colors.text },
   headerSub:   { ...typography.caption, color: colors.muted, marginTop: 1 },
 
   // Qty selector
@@ -163,7 +163,7 @@ const s = StyleSheet.create({
     marginBottom: 16, alignItems: 'center',
   },
   qtyRow:      { flexDirection: 'row', alignItems: 'center', gap: 28, marginBottom: 10 },
-  qtyNum:      { fontSize: 64, fontWeight: '900', color: colors.text, minWidth: 115, textAlign: 'center', lineHeight: 64 },
+  qtyNum:      { fontFamily: fonts.extraBold, fontSize: 64, fontWeight: '900', color: colors.text, minWidth: 115, textAlign: 'center', lineHeight: 64 },
   btnMinus: {
     width: 50, height: 50, borderRadius: 25,
     backgroundColor: colors.card2,
@@ -236,5 +236,5 @@ const s = StyleSheet.create({
     elevation: 8,
   },
   saveBtnSuccess: { backgroundColor: colors.success },
-  saveBtnText:    { fontSize: 16, fontWeight: '800', color: 'white', letterSpacing: 0.2 },
+  saveBtnText:    { fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800', color: 'white', letterSpacing: 0.2 },
 });

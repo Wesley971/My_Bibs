@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { colors } from "../theme/colors";
-import { typography } from "../theme/typography";
+import { typography, fonts } from "../theme/typography";
 
 const StatsScreen: React.FC = () => {
   return (
@@ -40,7 +40,7 @@ const s = StyleSheet.create({
     borderColor: colors.border,
   },
   icon:  { fontSize: 40, marginBottom: 12 },
-  title: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 12 },
+  title: { fontFamily: fonts.extraBold, fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 12 },
   badge: {
     backgroundColor: 'rgba(167,139,250,0.16)',
     borderRadius: 20,
