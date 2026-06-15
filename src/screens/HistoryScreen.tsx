@@ -174,7 +174,7 @@ export default function HistoryScreen() {
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  scroll:  { flex: 1, backgroundColor: colors.bg },
+  scroll:  { flex: 1, backgroundColor: 'transparent' },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
 
   headerRow: {

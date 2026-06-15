@@ -24,6 +24,7 @@ const AppNavigator = () => {
       <Tab.Navigator
           screenOptions={{
             headerShown: false,
+            sceneStyle: { backgroundColor: 'transparent' },
             tabBarStyle: {
               backgroundColor: colors.navBg,
               borderTopColor: colors.border,

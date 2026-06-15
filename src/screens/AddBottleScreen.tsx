@@ -139,7 +139,7 @@ export default function AddBottleScreen({ navigation }: any) {
 }
 
 const s = StyleSheet.create({
-  scroll:  { flex: 1, backgroundColor: colors.bg },
+  scroll:  { flex: 1, backgroundColor: 'transparent' },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
 
   // Header

@@ -149,8 +149,8 @@ export default function HomeScreen({ navigation }: any) {
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: colors.bg },
-  scroll:  { flex: 1 },
+  root:    { flex: 1, backgroundColor: 'transparent' },
+  scroll:  { flex: 1, backgroundColor: 'transparent' },
   content: { paddingBottom: 100 }, // espace pour le FAB
 
   // Header

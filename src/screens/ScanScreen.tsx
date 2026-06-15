@@ -157,7 +157,7 @@ export default function ScanScreen({ navigation }: any) {
 const s = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     paddingHorizontal: 22,
     paddingTop: 16,
@@ -233,7 +233,8 @@ const s = StyleSheet.create({
 
   // Permission
   permContainer: {
-    flex: 1, backgroundColor: colors.bg,
+    flex: 1,
+    backgroundColor: 'transparent',
     alignItems: 'center', justifyContent: 'center',
     gap: 16, paddingHorizontal: 32,
   },
@@ -247,7 +248,8 @@ const s = StyleSheet.create({
 
   // Résultat
   resultContainer: {
-    flex: 1, backgroundColor: colors.bg,
+    flex: 1,
+    backgroundColor: 'transparent',
     alignItems: 'center', justifyContent: 'center',
     gap: 16, paddingHorizontal: 32,
   },
