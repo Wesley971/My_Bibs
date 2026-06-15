@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity,
+  View, Text, TouchableOpacity,
   TextInput, StyleSheet, Platform,
 } from "react-native";
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring,
 } from "react-native-reanimated";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { saveBottle, updateBottle, Bottle } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -62,11 +63,12 @@ export default function AddBottleScreen({ navigation, route }: any) {
   }
 
   return (
-    <ScrollView
-      style={s.scroll}
+    <KeyboardAwareScrollView
       contentContainerStyle={s.content}
-      showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      enableOnAndroid={true}
+      extraScrollHeight={100}
+      keyboardOpeningTime={0}
     >
       {/* ── Header ── */}
       <View style={s.headerRow}>
@@ -157,13 +159,12 @@ export default function AddBottleScreen({ navigation, route }: any) {
           </Text>
         </TouchableOpacity>
       </Animated.View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  scroll:  { flex: 1, backgroundColor: 'transparent' },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
+  content: { padding: spacing.lg, paddingBottom: 120 },
 
   // Header
   headerRow: {

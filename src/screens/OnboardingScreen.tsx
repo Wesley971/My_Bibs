@@ -28,7 +28,7 @@ export default function OnboardingScreen({ onDone }: Props) {
   return (
     <KeyboardAvoidingView
       style={s.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
     >
       <ScrollView
         contentContainerStyle={s.scrollContent}
