@@ -26,8 +26,13 @@ export const getSettings = async (): Promise<Settings> => {
 };
 
 export const saveSettings = async (partial: Partial<Settings>): Promise<void> => {
-  const current = await getSettings();
-  await AsyncStorage.setItem(KEY, JSON.stringify({ ...current, ...partial }));
+  try {
+    const current = await getSettings();
+    await AsyncStorage.setItem(KEY, JSON.stringify({ ...current, ...partial }));
+  } catch (error) {
+    console.error('[settingsStorage] Échec de la sauvegarde :', error);
+    throw error;
+  }
 };
 
 export const isFirstLaunch = async (): Promise<boolean> => {

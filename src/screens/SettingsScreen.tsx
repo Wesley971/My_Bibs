@@ -1,17 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView,
+  KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator,
 } from "react-native";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getSettings, saveSettings } from "../storage/settingsStorage";
+import { getBottles } from "../storage/bottleStorage";
+import { exportBottlesToCSV } from "../utils/exportUtils";
+import { shareCSV } from "../utils/shareUtils";
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography, fonts } from "../theme/typography";
 
-export default function SettingsScreen({ navigation }: any) {
-  const [childName, setChildName] = useState('');
-  const [dailyGoal, setDailyGoal] = useState(800);
-  const [saved,     setSaved]     = useState(false);
+type SettingsNavigationProp = StackNavigationProp<RootStackParamList, 'Paramètres'>;
+
+export default function SettingsScreen({ navigation }: { navigation: SettingsNavigationProp }) {
+  const [childName,   setChildName]   = useState('');
+  const [dailyGoal,   setDailyGoal]   = useState(800);
+  const [saved,       setSaved]       = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     getSettings().then(s => {
@@ -20,10 +37,23 @@ export default function SettingsScreen({ navigation }: any) {
     });
   }, []);
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const bottles = await getBottles();
+      const csv     = exportBottlesToCSV(bottles);
+      await shareCSV(csv, childName || 'bébé');
+    } catch {
+      Alert.alert('Erreur', 'Impossible d\'exporter les données.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   async function handleSave() {
     await saveSettings({ childName: childName.trim() || 'bébé', dailyGoal });
     setSaved(true);
-    setTimeout(() => {
+    saveTimeoutRef.current = setTimeout(() => {
       setSaved(false);
       navigation.goBack();
     }, 800);
@@ -45,6 +75,8 @@ export default function SettingsScreen({ navigation }: any) {
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={s.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Retour"
           >
             <Text style={s.backIcon}>‹</Text>
           </TouchableOpacity>
@@ -75,6 +107,8 @@ export default function SettingsScreen({ navigation }: any) {
               style={s.adjBtn}
               onPress={() => setDailyGoal(g => Math.max(200, g - 50))}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Diminuer l'objectif journalier"
             >
               <Text style={s.adjBtnText}>−</Text>
             </TouchableOpacity>
@@ -88,6 +122,8 @@ export default function SettingsScreen({ navigation }: any) {
               style={[s.adjBtn, s.adjBtnPlus]}
               onPress={() => setDailyGoal(g => g + 50)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Augmenter l'objectif journalier"
             >
               <Text style={s.adjBtnText}>+</Text>
             </TouchableOpacity>
@@ -99,10 +135,33 @@ export default function SettingsScreen({ navigation }: any) {
           style={[s.saveBtn, saved && s.saveBtnSuccess]}
           onPress={handleSave}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Enregistrer les paramètres"
         >
           <Text style={s.saveBtnText}>
             {saved ? '✓  Enregistré !' : 'Enregistrer'}
           </Text>
+        </TouchableOpacity>
+
+        {/* ── Données ── */}
+        <Text style={[s.sectionLabel, { marginTop: 36 }]}>DONNÉES</Text>
+        <TouchableOpacity
+          style={[s.exportRow, isExporting && s.exportRowDisabled]}
+          onPress={handleExport}
+          disabled={isExporting}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Exporter les données au format CSV"
+        >
+          {isExporting ? (
+            <ActivityIndicator size="small" color={colors.accent} />
+          ) : (
+            <MaterialCommunityIcons name="export" size={22} color={colors.accent} />
+          )}
+          <View style={s.exportTextCol}>
+            <Text style={s.exportLabel}>Exporter les données</Text>
+            <Text style={s.exportSub}>Historique complet au format CSV</Text>
+          </View>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -164,6 +223,31 @@ const s = StyleSheet.create({
   },
   goalUnit: { ...typography.caption, color: colors.muted, marginTop: 2 },
 
+  // Export
+  exportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.xl,
+  },
+  exportRowDisabled: { opacity: 0.5 },
+  exportTextCol: { flex: 1 },
+  exportLabel: {
+    fontFamily: fonts.semiBold,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  exportSub: {
+    ...typography.caption,
+    color: colors.muted,
+    marginTop: 2,
+  },
+
   // Bouton
   saveBtn: {
     marginTop: 32, paddingVertical: 17, borderRadius: 16,
@@ -175,6 +259,6 @@ const s = StyleSheet.create({
   saveBtnSuccess: { backgroundColor: colors.success },
   saveBtnText: {
     fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800',
-    color: 'white', letterSpacing: 0.2,
+    color: colors.textOnAccent, letterSpacing: 0.2,
   },
 });

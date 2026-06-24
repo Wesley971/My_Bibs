@@ -136,7 +136,7 @@ const s = StyleSheet.create({
   },
   dot: {
     height: 8, width: 8, borderRadius: 4,
-    backgroundColor: 'rgba(167,139,250,0.25)',
+    backgroundColor: colors.accentDim,
   },
   dotActive: { width: 24, backgroundColor: colors.accent },
 
@@ -195,7 +195,7 @@ const s = StyleSheet.create({
     elevation: 8, marginBottom: 16,
   },
   btnText: {
-    fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800', color: 'white',
+    fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800', color: colors.textOnAccent,
   },
 
   // Lien retour

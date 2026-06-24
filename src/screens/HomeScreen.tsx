@@ -1,12 +1,17 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  AppState, View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet,
 } from "react-native";
 import Animated, {
   useAnimatedStyle, useSharedValue, withDelay, withTiming,
 } from "react-native-reanimated";
-import { useFocusEffect } from "@react-navigation/native";
-import { getBottles } from "../storage/bottleStorage";
+import { useFocusEffect, CompositeNavigationProp } from "@react-navigation/native";
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList, TabParamList } from '../navigation/AppNavigator';
+import { useBottlesForToday } from '../hooks/useBottlesForToday';
+import { SkeletonRow } from '../components/SkeletonRow';
+import { Bottle } from "../storage/bottleStorage";
 import { getSettings, Settings } from "../storage/settingsStorage";
 import { DAILY_GOAL_DEFAULT, BADGE_GREEN_MIN, BADGE_ORANGE_MAX } from "../config/constants";
 import { colors } from "../theme/colors";
@@ -21,7 +26,10 @@ const MONTH_NAMES = [
 ];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-type Bottle = { id: string; quantity: number; timestamp: string; notes: string };
+type HomeNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Accueil'>,
+  StackNavigationProp<RootStackParamList>
+>;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function timeStr(iso: string): string {
@@ -32,8 +40,8 @@ function timeStr(iso: string): string {
 // ── QtyBadge ───────────────────────────────────────────────────────────────────
 function QtyBadge({ qty }: { qty: number }) {
   const good = qty >= BADGE_GREEN_MIN, low = qty <= BADGE_ORANGE_MAX;
-  const bg  = good ? colors.goodBg  : low ? colors.lowBg  : 'rgba(167,139,250,0.18)';
-  const bdr = good ? colors.goodBdr : low ? colors.lowBdr : 'rgba(167,139,250,0.35)';
+  const bg  = good ? colors.goodBg  : low ? colors.lowBg  : colors.border;
+  const bdr = good ? colors.goodBdr : low ? colors.lowBdr : colors.accentBdr;
   const col = good ? colors.goodText: low ? colors.lowText: colors.acL;
   return (
     <View style={[s.badge, { backgroundColor: bg, borderColor: bdr }]}>
@@ -43,7 +51,7 @@ function QtyBadge({ qty }: { qty: number }) {
 }
 
 // ── HomeBibRow — FadeIn + slideUp avec délai progressif ───────────────────────
-function HomeBibRow({ item, index, triggerKey }: { item: Bottle; index: number; triggerKey: number }) {
+const HomeBibRow = React.memo(function HomeBibRow({ item, index, triggerKey }: { item: Bottle; index: number; triggerKey: number }) {
   const opacity    = useSharedValue(0);
   const translateY = useSharedValue(20);
 
@@ -55,7 +63,7 @@ function HomeBibRow({ item, index, triggerKey }: { item: Bottle; index: number; 
   useEffect(() => {
     opacity.value    = 0;
     translateY.value = 20;
-    const delay = index * 60;
+    const delay = Math.min(index, 5) * 60;
     opacity.value    = withDelay(delay, withTiming(1, { duration: 300 }));
     translateY.value = withDelay(delay, withTiming(0, { duration: 300 }));
   }, [triggerKey]);
@@ -70,76 +78,31 @@ function HomeBibRow({ item, index, triggerKey }: { item: Bottle; index: number; 
       </View>
     </Animated.View>
   );
-}
+});
 
 // ── Écran ──────────────────────────────────────────────────────────────────────
-export default function HomeScreen({ navigation }: any) {
-  const [bottles,  setBottles]  = useState<Bottle[]>([]);
-  const [focusKey, setFocusKey] = useState(0);
+export default function HomeScreen({ navigation }: { navigation: HomeNavigationProp }) {
+  const { bottles, focusKey } = useBottlesForToday();
   const [settings, setSettings] = useState<Settings>({
     childName: 'bébé', dailyGoal: DAILY_GOAL_DEFAULT, isOnboardingDone: true,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const cardOpacity   = useSharedValue(0);
   const cardAnimStyle = useAnimatedStyle(() => ({ opacity: cardOpacity.value }));
-  const currentDayRef = useRef(new Date().toDateString());
-
-  const loadBottles = useCallback(() => {
-    getBottles().then(all => {
-      const todayStr = new Date().toDateString();
-      const today = all
-        .filter(b => new Date(b.timestamp).toDateString() === todayStr)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setBottles(today);
-      setFocusKey(k => k + 1);
-    });
-  }, []);
 
   // Anime la card une seule fois au montage initial
   useEffect(() => {
     cardOpacity.value = withDelay(150, withTiming(1, { duration: 400 }));
   }, []);
 
-  // Recharge les données + settings à chaque focus
+  // Recharge les settings à chaque focus
   useFocusEffect(useCallback(() => {
-    loadBottles();
-    getSettings().then(setSettings);
-  }, [loadBottles]));
-
-  // Mécanisme 1 — refresh automatique à minuit exact
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    function scheduleNextMidnight() {
-      const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(24, 0, 0, 0);
-      const msUntilMidnight = midnight.getTime() - now.getTime();
-
-      timeoutId = setTimeout(() => {
-        loadBottles();
-        scheduleNextMidnight();
-      }, msUntilMidnight);
-    }
-
-    scheduleNextMidnight();
-    return () => clearTimeout(timeoutId);
-  }, [loadBottles]);
-
-  // Mécanisme 2 — refresh si l'app revient au premier plan un jour différent
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextState => {
-      if (nextState === 'active') {
-        const today = new Date().toDateString();
-        if (today !== currentDayRef.current) {
-          currentDayRef.current = today;
-          loadBottles();
-        }
-      }
-    });
-
-    return () => subscription.remove();
-  }, [loadBottles]);
+    setIsLoading(true);
+    getSettings()
+      .then(setSettings)
+      .finally(() => setIsLoading(false));
+  }, []));
 
   // ── Calculs ──
   const total    = bottles.reduce((sum, b) => sum + b.quantity, 0);
@@ -171,8 +134,15 @@ export default function HomeScreen({ navigation }: any) {
             <TouchableOpacity
               onPress={() => navigation.navigate('Paramètres')}
               style={s.settingsBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Ouvrir les paramètres"
             >
-              <Text style={s.settingsIcon}>⚙️</Text>
+              <Text
+                style={s.settingsIcon}
+                accessibilityLabel="icône paramètres"
+                accessibilityRole="image"
+                importantForAccessibility="no"
+              >⚙️</Text>
             </TouchableOpacity>
           </View>
           <Text style={s.greet}>{greet}</Text>
@@ -212,12 +182,22 @@ export default function HomeScreen({ navigation }: any) {
         <View style={s.section}>
           <View style={s.sectionHeader}>
             <Text style={s.sectionTitle}>Biberons du jour</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Historique')}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Historique')}
+              accessibilityRole="button"
+              accessibilityLabel="Voir tout l'historique"
+            >
               <Text style={s.seeAll}>Tout voir</Text>
             </TouchableOpacity>
           </View>
 
-          {bottles.length === 0 ? (
+          {isLoading ? (
+            <>
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </>
+          ) : bottles.length === 0 ? (
             <Text style={s.empty}>Aucun biberon enregistré aujourd'hui.</Text>
           ) : (
             bottles.map((b, idx) => (
@@ -240,7 +220,7 @@ const s = StyleSheet.create({
   // Header
   header:   { padding: spacing.lg, paddingBottom: spacing.xl },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
-  settingsBtn:  { padding: 4 },
+  settingsBtn:  { padding: 10 },
   settingsIcon: { fontSize: 18 },
   dateLabel:{ ...typography.caption, color: colors.muted },
   greet:    { ...typography.caption, color: colors.muted, fontWeight: '500' },
@@ -269,7 +249,7 @@ const s = StyleSheet.create({
   goalLabel: { ...typography.label, color: colors.muted, marginBottom: 2 },
   goalNum:   { fontFamily: fonts.extraBold, fontSize: 17, fontWeight: '800', color: colors.text },
 
-  progressBg:   { backgroundColor: 'rgba(167,139,250,0.12)', borderRadius: 99, height: 6, overflow: 'hidden', marginBottom: 10 },
+  progressBg:   { backgroundColor: colors.progressBg, borderRadius: 99, height: 6, overflow: 'hidden', marginBottom: 10 },
   progressFill: { height: '100%', borderRadius: 99, backgroundColor: colors.accent },
   progressMeta: { flexDirection: 'row', justifyContent: 'space-between' },
   mutedText:    { ...typography.caption, color: colors.muted },
@@ -292,7 +272,7 @@ const s = StyleSheet.create({
   bibName:    { fontFamily: fonts.semiBold, flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
 
 
-  empty: { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 24 },
+  empty:  { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 24 },
 
   // Badge quantité
 

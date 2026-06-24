@@ -1,16 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, TouchableOpacity,
-  TextInput, StyleSheet, Platform,
+  TextInput, StyleSheet, Platform, Alert,
 } from "react-native";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, {
   useAnimatedStyle, useSharedValue, withSpring,
 } from "react-native-reanimated";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList, TabParamList } from '../navigation/AppNavigator';
 import { saveBottle, updateBottle, Bottle } from "../storage/bottleStorage";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography, fonts } from "../theme/typography";
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+type AddBottleNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Ajout'>,
+  StackNavigationProp<RootStackParamList>
+>;
+type AddBottleRoute = { params?: { bottle?: Bottle } };
 
 const CHIPS = [60, 90, 120, 150, 180, 210];
 
@@ -18,14 +30,31 @@ function fmt(d: Date) {
   return `${d.getHours()}h${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-export default function AddBottleScreen({ navigation, route }: any) {
+export default function AddBottleScreen({ navigation, route }: { navigation: AddBottleNavigationProp; route: AddBottleRoute }) {
   const bottle: Bottle | undefined = route?.params?.bottle;
   const isEditing = Boolean(bottle);
 
-  const [qty,   setQty]  = useState(bottle ? bottle.quantity : 120);
-  const [time,  setTime] = useState(() => bottle ? fmt(new Date(bottle.timestamp)) : fmt(new Date()));
-  const [note,  setNote] = useState(bottle ? bottle.notes : '');
-  const [saved, setSaved] = useState(false);
+  const [qty,          setQty]          = useState(bottle ? bottle.quantity : 120);
+  const [time,         setTime]         = useState(() => bottle ? fmt(new Date(bottle.timestamp)) : fmt(new Date()));
+  const [note,         setNote]         = useState(bottle ? bottle.notes : '');
+  const [saved,        setSaved]        = useState(false);
+  const [showPicker,   setShowPicker]   = useState(false);
+  const [selectedTime, setSelectedTime] = useState(() => bottle ? new Date(bottle.timestamp) : new Date());
+
+  const editTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const addTimeoutRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (editTimeoutRef.current) clearTimeout(editTimeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (addTimeoutRef.current) clearTimeout(addTimeoutRef.current);
+    };
+  }, []);
 
   const saveScale    = useSharedValue(1);
   const saveAnimStyle = useAnimatedStyle(() => ({
@@ -46,20 +75,22 @@ export default function AddBottleScreen({ navigation, route }: any) {
         );
         await updateBottle(bottle.id, qty, editedDate.toISOString(), note);
         setSaved(true);
-        setTimeout(() => { setSaved(false); navigation.goBack(); }, 950);
+        editTimeoutRef.current = setTimeout(() => { setSaved(false); navigation.goBack(); }, 950);
       } else {
         const n = new Date();
         const date = new Date(n.getFullYear(), n.getMonth(), n.getDate(), Number(hStr), Number(mStr));
         await saveBottle(String(qty), date, note);
         setSaved(true);
-        setTimeout(() => {
+        addTimeoutRef.current = setTimeout(() => {
           setSaved(false);
           setQty(120);
           setNote('');
           setNow();
         }, 950);
       }
-    } catch { /* ignore */ }
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de sauvegarder le biberon. Réessaie.');
+    }
   }
 
   return (
@@ -84,6 +115,8 @@ export default function AddBottleScreen({ navigation, route }: any) {
           <TouchableOpacity
             onPress={() => setQty(q => Math.max(10, q - 10))}
             style={s.btnMinus}
+            accessibilityRole="button"
+            accessibilityLabel="Diminuer la quantité"
           >
             <Text style={s.btnMinusText}>−</Text>
           </TouchableOpacity>
@@ -93,6 +126,8 @@ export default function AddBottleScreen({ navigation, route }: any) {
           <TouchableOpacity
             onPress={() => setQty(q => q + 10)}
             style={s.btnPlus}
+            accessibilityRole="button"
+            accessibilityLabel="Augmenter la quantité"
           >
             <Text style={s.btnPlusText}>+</Text>
           </TouchableOpacity>
@@ -107,6 +142,8 @@ export default function AddBottleScreen({ navigation, route }: any) {
             key={v}
             onPress={() => setQty(v)}
             style={[s.chip, qty === v && s.chipActive]}
+            accessibilityRole="button"
+            accessibilityLabel={`Sélectionner ${v} ml`}
           >
             <Text style={[s.chipText, qty === v && s.chipTextActive]}>
               {v} ml
@@ -119,13 +156,46 @@ export default function AddBottleScreen({ navigation, route }: any) {
       <View style={s.fieldBlock}>
         <Text style={s.fieldLabel}>HEURE</Text>
         <View style={s.fieldRow}>
-          <Text style={s.clockIcon}>◷</Text>
+          <Text
+            style={s.clockIcon}
+            accessibilityLabel="horloge"
+            accessibilityRole="image"
+            importantForAccessibility="no"
+          >◷</Text>
           <Text style={s.fieldValue}>{time}</Text>
-          <TouchableOpacity onPress={setNow} style={s.nowBtn}>
+          <TouchableOpacity
+            onPress={setNow}
+            style={s.nowBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Définir l'heure maintenant"
+          >
             <Text style={s.nowBtnText}>Maintenant</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowPicker(true)}
+            style={s.pickBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Choisir l'heure"
+          >
+            <Text style={s.pickBtnText}>Choisir</Text>
           </TouchableOpacity>
         </View>
       </View>
+      {showPicker && (
+        <DateTimePicker
+          value={selectedTime}
+          mode="time"
+          is24Hour={true}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={(event, date) => {
+            setShowPicker(Platform.OS === 'ios');
+            if (date) {
+              setSelectedTime(date);
+              setTime(fmt(date));
+            }
+          }}
+        />
+      )}
 
       {/* ── Note ── */}
       <View style={s.fieldBlock}>
@@ -153,6 +223,8 @@ export default function AddBottleScreen({ navigation, route }: any) {
           onPressOut={() => { saveScale.value = withSpring(1.0); }}
           style={[s.saveBtn, saved && s.saveBtnSuccess]}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={isEditing ? 'Modifier le biberon' : 'Enregistrer le biberon'}
         >
           <Text style={s.saveBtnText}>
             {saved ? '✓  Enregistré !' : isEditing ? 'Modifier' : 'Enregistrer'}
@@ -203,7 +275,7 @@ const s = StyleSheet.create({
     shadowRadius: 8, shadowOffset: { width: 0, height: 3 },
     elevation: 6,
   },
-  btnPlusText: { color: 'white', fontSize: 28, lineHeight: Platform.OS === 'android' ? 32 : 28 },
+  btnPlusText: { color: colors.textOnAccent, fontSize: 28, lineHeight: Platform.OS === 'android' ? 32 : 28 },
   mlLabel:     { ...typography.bodyS, color: colors.muted },
 
   // Chips
@@ -218,7 +290,7 @@ const s = StyleSheet.create({
   },
   chipActive:     { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText:       { ...typography.chip, color: colors.muted },
-  chipTextActive: { ...typography.chip, color: 'white' },
+  chipTextActive: { ...typography.chip, color: colors.textOnAccent },
 
   // Fields
   fieldBlock: { marginBottom: 14 },
@@ -238,7 +310,13 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, borderRadius: 99,
     paddingVertical: 6, paddingHorizontal: 14,
   },
-  nowBtnText: { ...typography.caption, color: 'white', fontWeight: '700' },
+  nowBtnText: { ...typography.caption, color: colors.textOnAccent, fontWeight: '700' },
+  pickBtn: {
+    backgroundColor: colors.card2, borderRadius: 99,
+    paddingVertical: 6, paddingHorizontal: 14,
+    borderWidth: 1, borderColor: colors.border,
+  },
+  pickBtnText: { ...typography.caption, color: colors.text, fontWeight: '700' },
 
   // Notes
   notesBox: {
@@ -260,5 +338,5 @@ const s = StyleSheet.create({
     elevation: 8,
   },
   saveBtnSuccess: { backgroundColor: colors.success },
-  saveBtnText:    { fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800', color: 'white', letterSpacing: 0.2 },
+  saveBtnText:    { fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800', color: colors.textOnAccent, letterSpacing: 0.2 },
 });

@@ -13,6 +13,7 @@ import HomeScreen from "../screens/HomeScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import ScanScreen from "../screens/ScanScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import StatsScreen from "../screens/StatsScreen";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 export type RootStackParamList = {
@@ -25,6 +26,7 @@ export type TabParamList = {
   Accueil: undefined;
   Ajout: undefined;
   Historique: undefined;
+  Stats: undefined;
   Scan: undefined;
 };
 
@@ -64,7 +66,7 @@ function TabNavigator() {
         component={AddBottleScreen}
         options={{
           tabBarLabel: '',
-          tabBarItemStyle: { marginBottom: 10 },
+          tabBarItemStyle: { flex: 1, marginBottom: 10 },
           tabBarIcon: () => (
             <View style={{
               width: 60, height: 60, borderRadius: 30,
@@ -75,7 +77,7 @@ function TabNavigator() {
               shadowOffset: { width: 0, height: 3 },
               elevation: 6,
             }}>
-              <MaterialCommunityIcons name="baby-bottle-outline" color="white" size={28} />
+              <MaterialCommunityIcons name="baby-bottle-outline" color={colors.textOnAccent} size={28} />
             </View>
           ),
         }}
@@ -87,6 +89,15 @@ function TabNavigator() {
           title: "Historique",
           tabBarIcon: ({ color, size }) =>
             <MaterialCommunityIcons name="history" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="Stats"
+        component={StatsScreen}
+        options={{
+          title: "Stats",
+          tabBarIcon: ({ color, size }) =>
+            <MaterialCommunityIcons name="chart-bar" color={color} size={size} />,
         }}
       />
       <Tab.Screen

@@ -1,39 +1,56 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity,
-  Alert, Animated, Easing,
+  View, Text, StyleSheet, TouchableOpacity, Alert,
 } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
+} from 'react-native-reanimated';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { saveBottle } from '../storage/bottleStorage';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography, fonts } from '../theme/typography';
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList, TabParamList } from '../navigation/AppNavigator';
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+type ScanNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'Scan'>,
+  StackNavigationProp<RootStackParamList>
+>;
 
 // ── Taille du cadre QR ────────────────────────────────────────────────────────
 const FRAME = 216;
 const CORNER = 28;
 
-export default function ScanScreen({ navigation }: any) {
+export default function ScanScreen({ navigation }: { navigation: ScanNavigationProp }) {
   // ── Logique caméra (inchangée) ────────────────────────────────────────────
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedData, setScannedData]   = useState<string | null>(null);
   const [scanning, setScanning]         = useState(true);
+  const isScanningRef                   = useRef(true);
 
   useEffect(() => {
     if (!permission?.granted) requestPermission();
   }, []);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    if (!isScanningRef.current) return;
+    isScanningRef.current = false;
     setScanning(false);
     let parsed: { quantity?: string; notes?: string } = {};
     try { parsed = JSON.parse(data); }
     catch {
       Alert.alert('QR invalide', 'Le QR code ne contient pas de JSON valide.');
+      isScanningRef.current = true;
       setScanning(true);
       return;
     }
     if (!parsed.quantity) {
       Alert.alert('Données manquantes', 'Le champ "quantity" est absent du QR code.');
+      isScanningRef.current = true;
       setScanning(true);
       return;
     }
@@ -43,37 +60,30 @@ export default function ScanScreen({ navigation }: any) {
       Alert.alert(
         'Biberon enregistré',
         `${parsed.quantity} ml ajoutés avec succès.`,
-        [{ text: 'OK', onPress: () => setScanning(true) }],
+        [{ text: 'OK', onPress: () => { isScanningRef.current = true; setScanning(true); } }],
       );
     } catch {
       Alert.alert('Erreur', 'Impossible de sauvegarder le biberon.');
+      isScanningRef.current = true;
       setScanning(true);
     }
   };
 
-  const restartScan = () => { setScannedData(null); setScanning(true); };
+  const restartScan = () => { setScannedData(null); isScanningRef.current = true; setScanning(true); };
 
-  // ── Animation ligne de scan (Animated.loop, pas de Reanimated) ────────────
-  const scanY = useRef(new Animated.Value(0)).current;
+  const scanY = useSharedValue(0);
+  const scanLineStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: scanY.value }],
+  }));
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scanY, {
-          toValue: FRAME - 4,
-          duration: 2000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(scanY, {
-          toValue: 0,
-          duration: 2000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
+    scanY.value = withRepeat(
+      withSequence(
+        withTiming(FRAME - 4, { duration: 1500 }),
+        withTiming(0, { duration: 1500 }),
+      ),
+      -1,
+      false,
     );
-    loop.start();
-    return () => loop.stop();
   }, []);
 
   // ── Permission refusée ────────────────────────────────────────────────────
@@ -82,7 +92,12 @@ export default function ScanScreen({ navigation }: any) {
       <View style={s.permContainer}>
         <Text style={s.permIcon}>📷</Text>
         <Text style={s.permText}>Permission caméra requise</Text>
-        <TouchableOpacity style={s.permBtn} onPress={requestPermission}>
+        <TouchableOpacity
+          style={s.permBtn}
+          onPress={requestPermission}
+          accessibilityRole="button"
+          accessibilityLabel="Autoriser l'accès à la caméra"
+        >
           <Text style={s.permBtnText}>Autoriser l'accès</Text>
         </TouchableOpacity>
       </View>
@@ -95,7 +110,12 @@ export default function ScanScreen({ navigation }: any) {
       <View style={s.resultContainer}>
         <Text style={s.resultIcon}>✅</Text>
         <Text style={s.resultText}>Biberon enregistré</Text>
-        <TouchableOpacity style={s.permBtn} onPress={restartScan}>
+        <TouchableOpacity
+          style={s.permBtn}
+          onPress={restartScan}
+          accessibilityRole="button"
+          accessibilityLabel="Scanner à nouveau"
+        >
           <Text style={s.permBtnText}>Scanner à nouveau</Text>
         </TouchableOpacity>
       </View>
@@ -107,7 +127,12 @@ export default function ScanScreen({ navigation }: any) {
     <View style={s.container}>
 
       {/* Header */}
-      <TouchableOpacity onPress={() => navigation.navigate('Ajout')} style={s.closeBtn}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Ajout')}
+        style={s.closeBtn}
+        accessibilityRole="button"
+        accessibilityLabel="Fermer le scanner"
+      >
         <Text style={s.closeIcon}>✕</Text>
       </TouchableOpacity>
       <Text style={s.headerTitle}>Scanner</Text>
@@ -119,7 +144,7 @@ export default function ScanScreen({ navigation }: any) {
           <CameraView
             style={StyleSheet.absoluteFill}
             onBarcodeScanned={handleBarCodeScanned}
-            barcodeScannerSettings={{ barcodeTypes: ['qr', 'ean13', 'ean8', 'upc_a'] }}
+            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
           />
         )}
 
@@ -130,9 +155,7 @@ export default function ScanScreen({ navigation }: any) {
         <View style={[s.corner, s.cornerBR]} />
 
         {/* Ligne de scan animée */}
-        <Animated.View
-          style={[s.scanLine, { transform: [{ translateY: scanY }] }]}
-        />
+        <Animated.View style={[s.scanLine, scanLineStyle]} />
       </View>
 
       <Text style={s.instruction}>Placez le code QR dans le cadre</Text>
@@ -146,7 +169,12 @@ export default function ScanScreen({ navigation }: any) {
       </View>
 
       {/* Bouton manuel */}
-      <TouchableOpacity style={s.manualBtn} onPress={() => navigation.navigate('Ajout')}>
+      <TouchableOpacity
+        style={s.manualBtn}
+        onPress={() => navigation.navigate('Ajout')}
+        accessibilityRole="button"
+        accessibilityLabel="Saisir manuellement"
+      >
         <Text style={s.manualBtnText}>Saisir manuellement</Text>
       </TouchableOpacity>
     </View>
@@ -181,7 +209,7 @@ const s = StyleSheet.create({
     marginBottom: 28,
     overflow: 'hidden',
     borderRadius: 4,
-    backgroundColor: 'rgba(167,139,250,0.04)',
+    backgroundColor: colors.accentGhost,
   },
 
   // Coins
@@ -244,7 +272,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, borderRadius: 12,
     paddingVertical: 12, paddingHorizontal: 24,
   },
-  permBtnText: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: 'white' },
+  permBtnText: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: colors.textOnAccent },
 
   // Résultat
   resultContainer: {

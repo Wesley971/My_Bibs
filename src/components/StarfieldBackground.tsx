@@ -1,5 +1,6 @@
 import { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { colors } from '../theme/colors';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,7 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-const STAR_COUNT = 50;
+const STAR_COUNT = 30;
 const SIZES = [1.5, 2, 2.5] as const;
 
 type StarData = {
@@ -31,7 +32,7 @@ const STARS: StarData[] = Array.from({ length: STAR_COUNT }, (_, i) => ({
   duration: 1500 + Math.random() * 2000,
 }));
 
-function Star({ data }: { data: StarData }) {
+const Star = memo(function Star({ data }: { data: StarData }) {
   const opacity = useSharedValue(0.1 + Math.random() * 0.3);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ function Star({ data }: { data: StarData }) {
         false,
       ),
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
@@ -65,7 +67,7 @@ function Star({ data }: { data: StarData }) {
       ]}
     />
   );
-}
+});
 
 export default memo(function StarfieldBackground() {
   return (
@@ -82,6 +84,6 @@ const styles = StyleSheet.create({
   },
   star: {
     position: 'absolute',
-    backgroundColor: '#F8F8FF',
+    backgroundColor: colors.text,
   },
 });
