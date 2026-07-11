@@ -6,17 +6,22 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withDelay, withTiming,
 } from "react-native-reanimated";
 import { Swipeable } from "react-native-gesture-handler";
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect, CompositeNavigationProp } from "@react-navigation/native";
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { IconBabyBottle, IconCalendar, IconTrash, IconChevronRight } from '@tabler/icons-react-native';
 import { RootStackParamList, TabParamList } from '../navigation/AppNavigator';
 import { getBottles, deleteBottle, Bottle } from "../storage/bottleStorage";
 import { getSettings } from "../storage/settingsStorage";
-import { DAILY_GOAL_DEFAULT, BADGE_GREEN_MIN, BADGE_ORANGE_MAX } from "../config/constants";
+import { DAILY_GOAL_DEFAULT } from "../config/constants";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
+import { radius } from "../theme/radius";
 import { typography, fonts } from "../theme/typography";
 import { SkeletonRow } from '../components/SkeletonRow';
+import { QtyBadge } from '../components/QtyBadge';
+import { Toast } from '../components/Toast';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type DaySection = { title: string; total: number; pct: number; data: Bottle[] };
@@ -63,19 +68,6 @@ function timeStr(iso: string): string {
   return `${d.getHours()}h${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-// ── QtyBadge ───────────────────────────────────────────────────────────────────
-function QtyBadge({ qty }: { qty: number }) {
-  const good = qty >= BADGE_GREEN_MIN, low = qty <= BADGE_ORANGE_MAX;
-  const bg   = good ? colors.goodBg  : low ? colors.lowBg  : colors.border;
-  const bdr  = good ? colors.goodBdr : low ? colors.lowBdr : colors.accentBdr;
-  const col  = good ? colors.goodText: low ? colors.lowText: colors.acL;
-  return (
-    <View style={[s.badge, { backgroundColor: bg, borderColor: bdr }]}>
-      <Text style={[s.badgeText, { color: col }]}>{qty} ml</Text>
-    </View>
-  );
-}
-
 // ── BibRow avec Swipeable ──────────────────────────────────────────────────────
 const BibRow = React.memo(function BibRow({ item, onDelete, onPress, index }: { item: Bottle; onDelete: (id: string) => void; onPress: (bottle: Bottle) => void; index: number }) {
   const swipeRef   = useRef<Swipeable>(null);
@@ -110,7 +102,7 @@ const BibRow = React.memo(function BibRow({ item, onDelete, onPress, index }: { 
       accessibilityRole="button"
       accessibilityLabel="Supprimer ce biberon"
     >
-      <Text style={s.deleteActionIcon}>🗑</Text>
+      <IconTrash size={18} color={colors.textOnAccent} />
       <Text style={s.deleteActionText}>Suppr.</Text>
     </TouchableOpacity>
   );
@@ -131,6 +123,7 @@ const BibRow = React.memo(function BibRow({ item, onDelete, onPress, index }: { 
         friction={2}
         rightThreshold={40}
         overshootRight={false}
+        onSwipeableWillOpen={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
       >
         <TouchableOpacity
           style={s.bibRow}
@@ -140,13 +133,13 @@ const BibRow = React.memo(function BibRow({ item, onDelete, onPress, index }: { 
           accessibilityLabel="Modifier ce biberon"
         >
           <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
-          <Text style={s.bottleIcon}>🍼</Text>
+          <IconBabyBottle size={15} color={colors.muted} />
           <View style={s.bibInfo}>
             <Text style={s.bibName}>Biberon</Text>
             {item.notes ? <Text style={s.bibNote}>{item.notes}</Text> : null}
           </View>
           <QtyBadge qty={item.quantity} />
-          <Text style={s.chevron}>›</Text>
+          <IconChevronRight size={18} color={colors.muted} />
         </TouchableOpacity>
       </Swipeable>
     </Animated.View>
@@ -163,12 +156,6 @@ export default function HistoryScreen({ navigation }: { navigation: HistoryNavig
   useEffect(() => {
     return () => { if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current); };
   }, []);
-
-  const toastOpacity = useSharedValue(0);
-  const toastAnimStyle = useAnimatedStyle(() => ({ opacity: toastOpacity.value }));
-  useEffect(() => {
-    toastOpacity.value = withTiming(toastVisible ? 1 : 0, { duration: 200 });
-  }, [toastVisible]);
 
   const reload = useCallback(() => {
     setIsLoading(true);
@@ -214,7 +201,7 @@ export default function HistoryScreen({ navigation }: { navigation: HistoryNavig
               <Text style={s.weekTotal}>{weekTotal} ml cette semaine</Text>
             </View>
             <View style={s.monthBadge}>
-              <Text style={s.calIcon}>📅</Text>
+              <IconCalendar size={13} color={colors.muted} />
               <Text style={s.monthLabel}>
                 {MONTH_NAMES[now.getMonth()].charAt(0).toUpperCase()
                   + MONTH_NAMES[now.getMonth()].slice(1)} {now.getFullYear()}
@@ -258,9 +245,7 @@ export default function HistoryScreen({ navigation }: { navigation: HistoryNavig
         SectionSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         ItemSeparatorComponent={() => <View style={s.itemSep} />}
       />
-      <Animated.View style={[s.toast, toastAnimStyle]} pointerEvents="none">
-        <Text style={s.toastText}>Biberon supprimé</Text>
-      </Animated.View>
+      <Toast visible={toastVisible}>Biberon supprimé</Toast>
     </View>
   );
 }
@@ -275,34 +260,33 @@ const s = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'flex-start', marginBottom: 18, paddingTop: 6,
   },
-  h2:        { fontFamily: fonts.extraBold, fontSize: 28, fontWeight: '900', color: colors.text },
+  h2:        { ...typography.h1, color: colors.text },
   weekTotal: { ...typography.small, color: colors.muted, marginTop: 2 },
   monthBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.card, borderRadius: 20,
+    backgroundColor: colors.card, borderRadius: radius.pill,
     paddingVertical: 6, paddingHorizontal: 12, marginTop: 4,
   },
-  calIcon:    { fontSize: 12 },
-  monthLabel: { ...typography.caption, fontWeight: '600', color: colors.muted },
+  monthLabel: { ...typography.small, fontWeight: '600', color: colors.muted },
 
   empty: { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 40 },
 
   dayHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 10, paddingHorizontal: 14,
-    backgroundColor: colors.card, borderRadius: 12,
+    backgroundColor: colors.card, borderRadius: radius.md,
     marginBottom: 2,
   },
   dayLabel: { ...typography.small, fontWeight: '700', color: colors.text, flex: 1 },
   miniProgressBg: {
     width: 54, height: 3,
     backgroundColor: colors.accentSubtle,
-    borderRadius: 99, overflow: 'hidden',
+    borderRadius: radius.pill, overflow: 'hidden',
   },
-  miniProgressFill: { height: '100%', backgroundColor: colors.accent, borderRadius: 99 },
+  miniProgressFill: { height: '100%', backgroundColor: colors.accent, borderRadius: radius.pill },
   dayPct:     { ...typography.label, color: colors.muted },
   dayTotalBadge: {
-    backgroundColor: colors.accentSubtle, borderRadius: 10,
+    backgroundColor: colors.accentSubtle, borderRadius: radius.sm,
     paddingVertical: 3, paddingHorizontal: 10,
   },
   dayTotalText: { fontFamily: fonts.bold, fontSize: 12, fontWeight: '700', color: colors.acL },
@@ -312,12 +296,10 @@ const s = StyleSheet.create({
     backgroundColor: colors.card,
     paddingVertical: 11, paddingHorizontal: 13,
   },
-  bibTime:    { ...typography.caption, color: colors.muted, minWidth: 38 },
-  bottleIcon: { fontSize: 15 },
+  bibTime:    { ...typography.small, color: colors.muted, minWidth: 38 },
   bibInfo:    { flex: 1 },
   bibName:    { fontFamily: fonts.semiBold, fontSize: 13, fontWeight: '600', color: colors.text },
   bibNote:    { fontSize: 11, color: colors.muted, fontStyle: 'italic', marginTop: 1 },
-  chevron:    { fontSize: 18, color: colors.muted },
 
   itemSep: { height: 2, backgroundColor: colors.bg },
 
@@ -328,29 +310,5 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 3,
   },
-  deleteActionIcon: { fontSize: 16 },
   deleteActionText: { ...typography.label, color: colors.textOnAccent },
-
-  badge: {
-    borderWidth: 1, borderRadius: 10,
-    paddingVertical: 3, paddingHorizontal: 10,
-  },
-  badgeText: { fontFamily: fonts.bold, fontSize: 12, fontWeight: '700' },
-
-  toast: {
-    position: 'absolute',
-    bottom: 24,
-    alignSelf: 'center',
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  toastText: {
-    ...typography.small,
-    color: colors.text,
-    fontWeight: '600',
-  },
 });
