@@ -4,17 +4,19 @@ import {
   TextInput, StyleSheet, Platform, Alert,
 } from "react-native";
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Animated, {
-  useAnimatedStyle, useSharedValue, withSpring,
-} from "react-native-reanimated";
+import * as Haptics from 'expo-haptics';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { IconClock, IconCircleCheck } from '@tabler/icons-react-native';
 import { RootStackParamList, TabParamList } from '../navigation/AppNavigator';
 import { saveBottle, updateBottle, Bottle } from "../storage/bottleStorage";
+import { Stepper } from '../components/Stepper';
+import { Button } from '../components/Button';
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
+import { radius } from "../theme/radius";
 import { typography, fonts } from "../theme/typography";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -56,11 +58,6 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
     };
   }, []);
 
-  const saveScale    = useSharedValue(1);
-  const saveAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: saveScale.value }],
-  }));
-
   function setNow() { setTime(fmt(new Date())); }
 
   async function handleSave() {
@@ -75,12 +72,14 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
         );
         await updateBottle(bottle.id, qty, editedDate.toISOString(), note);
         setSaved(true);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         editTimeoutRef.current = setTimeout(() => { setSaved(false); navigation.goBack(); }, 950);
       } else {
         const n = new Date();
         const date = new Date(n.getFullYear(), n.getMonth(), n.getDate(), Number(hStr), Number(mStr));
         await saveBottle(String(qty), date, note);
         setSaved(true);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         addTimeoutRef.current = setTimeout(() => {
           setSaved(false);
           setQty(120);
@@ -111,27 +110,11 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
 
       {/* ── Sélecteur quantité ── */}
       <View style={s.card}>
-        <View style={s.qtyRow}>
-          <TouchableOpacity
-            onPress={() => setQty(q => Math.max(10, q - 10))}
-            style={s.btnMinus}
-            accessibilityRole="button"
-            accessibilityLabel="Diminuer la quantité"
-          >
-            <Text style={s.btnMinusText}>−</Text>
-          </TouchableOpacity>
-
-          <Text style={s.qtyNum}>{qty}</Text>
-
-          <TouchableOpacity
-            onPress={() => setQty(q => q + 10)}
-            style={s.btnPlus}
-            accessibilityRole="button"
-            accessibilityLabel="Augmenter la quantité"
-          >
-            <Text style={s.btnPlusText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        <Stepper
+          value={qty}
+          onDecrement={() => setQty(q => Math.max(10, q - 10))}
+          onIncrement={() => setQty(q => q + 10)}
+        />
         <Text style={s.mlLabel}>ml</Text>
       </View>
 
@@ -142,6 +125,7 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
             key={v}
             onPress={() => setQty(v)}
             style={[s.chip, qty === v && s.chipActive]}
+            activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={`Sélectionner ${v} ml`}
           >
@@ -156,16 +140,12 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
       <View style={s.fieldBlock}>
         <Text style={s.fieldLabel}>HEURE</Text>
         <View style={s.fieldRow}>
-          <Text
-            style={s.clockIcon}
-            accessibilityLabel="horloge"
-            accessibilityRole="image"
-            importantForAccessibility="no"
-          >◷</Text>
+          <IconClock size={16} color={colors.muted} />
           <Text style={s.fieldValue}>{time}</Text>
           <TouchableOpacity
             onPress={setNow}
             style={s.nowBtn}
+            activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Définir l'heure maintenant"
           >
@@ -174,6 +154,7 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
           <TouchableOpacity
             onPress={() => setShowPicker(true)}
             style={s.pickBtn}
+            activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Choisir l'heure"
           >
@@ -216,21 +197,21 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
       </View>
 
       {/* ── Bouton Enregistrer ── */}
-      <Animated.View style={saveAnimStyle}>
-        <TouchableOpacity
-          onPress={handleSave}
-          onPressIn={() => { saveScale.value = withSpring(0.95); }}
-          onPressOut={() => { saveScale.value = withSpring(1.0); }}
-          style={[s.saveBtn, saved && s.saveBtnSuccess]}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={isEditing ? 'Modifier le biberon' : 'Enregistrer le biberon'}
-        >
-          <Text style={s.saveBtnText}>
-            {saved ? '✓  Enregistré !' : isEditing ? 'Modifier' : 'Enregistrer'}
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
+      <Button
+        success={saved}
+        onPress={handleSave}
+        style={s.saveBtn}
+        accessibilityLabel={isEditing ? 'Modifier le biberon' : 'Enregistrer le biberon'}
+      >
+        {saved ? (
+          <View style={s.saveBtnSuccessRow}>
+            <IconCircleCheck size={18} color={colors.textOnAccent} />
+            <Text style={s.saveBtnText}>Enregistré !</Text>
+          </View>
+        ) : (
+          isEditing ? 'Modifier' : 'Enregistrer'
+        )}
+      </Button>
     </KeyboardAwareScrollView>
   );
 }
@@ -243,40 +224,16 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     gap: 14, paddingTop: 6, marginBottom: 24,
   },
-  backBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: colors.card,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  backIcon:    { color: colors.text, fontSize: 24, lineHeight: 30, marginTop: -2 },
   headerTitle: { fontFamily: fonts.extraBold, fontSize: 20, fontWeight: '800', color: colors.text },
-  headerSub:   { ...typography.caption, color: colors.muted, marginTop: 1 },
+  headerSub:   { ...typography.small, color: colors.muted, marginTop: 1 },
 
   // Qty selector
   card: {
-    backgroundColor: colors.card, borderRadius: 16,
+    backgroundColor: colors.card, borderRadius: radius.md,
     paddingVertical: 28, paddingHorizontal: spacing.xl,
     marginBottom: 16, alignItems: 'center',
   },
-  qtyRow:      { flexDirection: 'row', alignItems: 'center', gap: 28, marginBottom: 10 },
-  qtyNum:      { fontFamily: fonts.extraBold, fontSize: 64, fontWeight: '900', color: colors.text, minWidth: 115, textAlign: 'center', lineHeight: 64 },
-  btnMinus: {
-    width: 50, height: 50, borderRadius: 25,
-    backgroundColor: colors.card2,
-    borderWidth: 1, borderColor: colors.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  btnMinusText: { color: colors.text, fontSize: 28, lineHeight: Platform.OS === 'android' ? 32 : 28 },
-  btnPlus: {
-    width: 50, height: 50, borderRadius: 25,
-    backgroundColor: colors.accent,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: colors.accent, shadowOpacity: 0.5,
-    shadowRadius: 8, shadowOffset: { width: 0, height: 3 },
-    elevation: 6,
-  },
-  btnPlusText: { color: colors.textOnAccent, fontSize: 28, lineHeight: Platform.OS === 'android' ? 32 : 28 },
-  mlLabel:     { ...typography.bodyS, color: colors.muted },
+  mlLabel: { ...typography.body, color: colors.muted, marginTop: 10 },
 
   // Chips
   chips: {
@@ -284,13 +241,13 @@ const s = StyleSheet.create({
     gap: spacing.sm, marginBottom: 22, justifyContent: 'center',
   },
   chip: {
-    paddingVertical: 8, paddingHorizontal: 15, borderRadius: 12,
+    paddingVertical: 8, paddingHorizontal: 15, borderRadius: radius.md,
     backgroundColor: colors.card,
     borderWidth: 1, borderColor: colors.border,
   },
   chipActive:     { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipText:       { ...typography.chip, color: colors.muted },
-  chipTextActive: { ...typography.chip, color: colors.textOnAccent },
+  chipText:       { ...typography.small, fontWeight: '700', color: colors.muted },
+  chipTextActive: { ...typography.small, fontWeight: '700', color: colors.textOnAccent },
 
   // Fields
   fieldBlock: { marginBottom: 14 },
@@ -301,28 +258,27 @@ const s = StyleSheet.create({
   optional: { textTransform: 'none', fontWeight: '500', opacity: 0.65 },
   fieldRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.card, borderRadius: 12,
+    backgroundColor: colors.card, borderRadius: radius.md,
     padding: 13, paddingHorizontal: 14, gap: 10,
   },
-  clockIcon:  { fontSize: 16, color: colors.muted },
   fieldValue: { flex: 1, ...typography.body, color: colors.text },
   nowBtn: {
-    backgroundColor: colors.accent, borderRadius: 99,
+    backgroundColor: colors.accent, borderRadius: radius.pill,
     paddingVertical: 6, paddingHorizontal: 14,
   },
-  nowBtnText: { ...typography.caption, color: colors.textOnAccent, fontWeight: '700' },
+  nowBtnText: { ...typography.small, color: colors.textOnAccent, fontWeight: '700' },
   pickBtn: {
-    backgroundColor: colors.card2, borderRadius: 99,
+    backgroundColor: colors.card2, borderRadius: radius.pill,
     paddingVertical: 6, paddingHorizontal: 14,
     borderWidth: 1, borderColor: colors.border,
   },
-  pickBtnText: { ...typography.caption, color: colors.text, fontWeight: '700' },
+  pickBtnText: { ...typography.small, color: colors.text, fontWeight: '700' },
 
   // Notes
   notesBox: {
     backgroundColor: colors.card,
     borderWidth: 1, borderColor: colors.border,
-    borderRadius: 12, padding: 13, paddingHorizontal: 14,
+    borderRadius: radius.md, padding: 13, paddingHorizontal: 14,
   },
   notesInput: {
     color: colors.text, fontSize: 14,
@@ -330,13 +286,7 @@ const s = StyleSheet.create({
   },
 
   // Save button
-  saveBtn: {
-    marginTop: 12, paddingVertical: 17, borderRadius: 16,
-    backgroundColor: colors.accent, alignItems: 'center',
-    shadowColor: colors.accent, shadowOpacity: 0.38,
-    shadowRadius: 11, shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-  },
-  saveBtnSuccess: { backgroundColor: colors.success },
-  saveBtnText:    { fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800', color: colors.textOnAccent, letterSpacing: 0.2 },
+  saveBtn: { marginTop: 12 },
+  saveBtnSuccessRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  saveBtnText: { fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800', color: colors.textOnAccent, letterSpacing: 0.2 },
 });
