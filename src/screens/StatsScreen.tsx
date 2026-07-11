@@ -10,6 +10,7 @@ import { SkeletonRow } from '../components/SkeletonRow';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { radius } from '../theme/radius';
+import { cardShadow } from '../theme/shadows';
 import { typography, fonts } from '../theme/typography';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -211,6 +212,7 @@ const s = StyleSheet.create({
     marginBottom: spacing.xxl,
     borderWidth: 1,
     borderColor: colors.border,
+    ...cardShadow,
   },
   sectionLabel: {
     ...typography.label,
@@ -285,6 +287,7 @@ const s = StyleSheet.create({
     padding: spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
+    ...cardShadow,
   },
   metricLabel: {
     ...typography.small,
@@ -309,9 +312,9 @@ const s = StyleSheet.create({
     paddingVertical: 32,
   },
   streakNum: {
-    fontFamily: fonts.extraBold,
+    fontFamily: fonts.display,
     fontSize: 64,
-    fontWeight: '900',
+    fontWeight: '500',
     color: colors.text,
     lineHeight: 64,
   },

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { StatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { LinearGradient } from "expo-linear-gradient";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -36,8 +37,15 @@ export default function App() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <LinearGradient
+        colors={['#24234a', '#1a2242', colors.bg]}
+        locations={[0, 0.38, 0.72]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.1, y: 1 }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      />
       <StarfieldBackground />
       <AppNavigator />
     </GestureHandlerRootView>

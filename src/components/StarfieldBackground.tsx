@@ -10,8 +10,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-const STAR_COUNT = 30;
-const SIZES = [1.5, 2, 2.5] as const;
+const STAR_COUNT = 40;
+const SIZES = [1.5, 2, 2.5, 3] as const;
 
 type StarData = {
   id: number;
@@ -33,15 +33,15 @@ const STARS: StarData[] = Array.from({ length: STAR_COUNT }, (_, i) => ({
 }));
 
 const Star = memo(function Star({ data }: { data: StarData }) {
-  const opacity = useSharedValue(0.1 + Math.random() * 0.3);
+  const opacity = useSharedValue(0.3 + Math.random() * 0.25);
 
   useEffect(() => {
     opacity.value = withDelay(
       data.delay,
       withRepeat(
         withSequence(
-          withTiming(0.8, { duration: data.duration }),
-          withTiming(0.1, { duration: data.duration }),
+          withTiming(0.95, { duration: data.duration }),
+          withTiming(0.3, { duration: data.duration }),
         ),
         -1,
         false,
