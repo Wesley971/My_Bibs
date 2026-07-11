@@ -4,8 +4,14 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import { colors } from '../theme/colors';
+import { radius } from '../theme/radius';
 
-export const SkeletonRow = memo(function SkeletonRow() {
+const HEIGHTS = { row: 64, card: 110, chart: 180 } as const;
+
+type Props = { variant?: keyof typeof HEIGHTS };
+
+/** Placeholder pulsant utilisé pendant le chargement — la forme correspond à ce qu'il remplace. */
+export const SkeletonRow = memo(function SkeletonRow({ variant = 'row' }: Props) {
   const opacity = useSharedValue(0.4);
 
   useEffect(() => {
@@ -21,13 +27,19 @@ export const SkeletonRow = memo(function SkeletonRow() {
 
   const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
-  return <Animated.View style={[styles.row, animStyle]} />;
+  return (
+    <Animated.View
+      style={[
+        styles.row,
+        { height: HEIGHTS[variant], borderRadius: variant === 'chart' ? radius.lg : radius.md },
+        animStyle,
+      ]}
+    />
+  );
 });
 
 const styles = StyleSheet.create({
   row: {
-    height: 64,
-    borderRadius: 12,
     backgroundColor: colors.card,
     marginBottom: 8,
   },

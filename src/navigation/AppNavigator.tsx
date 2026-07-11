@@ -3,8 +3,11 @@ import { View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { IconHome, IconBabyBottle, IconHistory, IconChartBar, IconScan } from '@tabler/icons-react-native';
 import { colors } from "../theme/colors";
+import { fonts } from "../theme/typography";
+import { circleRadius } from "../theme/radius";
+import { accentShadowSoft } from "../theme/shadows";
 import { isFirstLaunch } from "../storage/settingsStorage";
 import { Bottle } from "../storage/bottleStorage";
 import AddBottleScreen from "../screens/AddBottleScreen";
@@ -48,7 +51,7 @@ function TabNavigator() {
         },
         tabBarActiveTintColor:   colors.accent,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
+        tabBarLabelStyle: { fontFamily: fonts.bold, fontSize: 10, fontWeight: '700' },
         tabBarItemStyle: { flex: 1 },
       }}
     >
@@ -58,7 +61,7 @@ function TabNavigator() {
         options={{
           title: "Accueil",
           tabBarIcon: ({ color, size }) =>
-            <MaterialCommunityIcons name="home-outline" color={color} size={size} />,
+            <IconHome color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -68,16 +71,12 @@ function TabNavigator() {
           tabBarLabel: '',
           tabBarItemStyle: { flex: 1, marginBottom: 10 },
           tabBarIcon: () => (
-            <View style={{
-              width: 60, height: 60, borderRadius: 30,
+            <View style={[{
+              width: 60, height: 60, borderRadius: circleRadius(60),
               backgroundColor: colors.accent,
               alignItems: 'center', justifyContent: 'center',
-              shadowColor: colors.accent,
-              shadowOpacity: 0.5, shadowRadius: 8,
-              shadowOffset: { width: 0, height: 3 },
-              elevation: 6,
-            }}>
-              <MaterialCommunityIcons name="baby-bottle-outline" color={colors.textOnAccent} size={28} />
+            }, accentShadowSoft]}>
+              <IconBabyBottle color={colors.textOnAccent} size={28} />
             </View>
           ),
         }}
@@ -88,7 +87,7 @@ function TabNavigator() {
         options={{
           title: "Historique",
           tabBarIcon: ({ color, size }) =>
-            <MaterialCommunityIcons name="history" color={color} size={size} />,
+            <IconHistory color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -97,7 +96,7 @@ function TabNavigator() {
         options={{
           title: "Stats",
           tabBarIcon: ({ color, size }) =>
-            <MaterialCommunityIcons name="chart-bar" color={color} size={size} />,
+            <IconChartBar color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -106,7 +105,7 @@ function TabNavigator() {
         options={{
           title: "Scan",
           tabBarIcon: ({ color, size }) =>
-            <MaterialCommunityIcons name="barcode-scan" color={color} size={size} />,
+            <IconScan color={color} size={size} />,
         }}
       />
     </Tab.Navigator>
