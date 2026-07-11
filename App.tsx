@@ -9,6 +9,7 @@ import {
   Nunito_700Bold,
   Nunito_800ExtraBold,
 } from "@expo-google-fonts/nunito";
+import { Spectral_500Medium } from "@expo-google-fonts/spectral";
 import AppNavigator from "./src/navigation/AppNavigator";
 import StarfieldBackground from "./src/components/StarfieldBackground";
 import { colors } from "./src/theme/colors";
@@ -21,6 +22,7 @@ export default function App() {
     Nunito_600SemiBold,
     Nunito_700Bold,
     Nunito_800ExtraBold,
+    Spectral_500Medium,
   });
 
   // Masque le splash dès que les fonts sont prêtes OU en erreur.
