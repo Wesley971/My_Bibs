@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { StyleSheet, Text, View } from 'react-native';
+import { IconMinus, IconPlus } from '@tabler/icons-react-native';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { IconButton } from './IconButton';
@@ -33,14 +34,14 @@ export function Stepper({ value, unit = 'ml', size = 'lg', onDecrement, onIncrem
   return (
     <View style={s.row}>
       <IconButton variant="default" onPress={decrement} accessibilityLabel="Diminuer">
-        <Text style={s.sign}>−</Text>
+        <IconMinus size={22} color={colors.text} />
       </IconButton>
       <View style={s.valueBox}>
         <Text style={[s.value, { fontSize: d.value }]}>{value}</Text>
         <Text style={[s.unit, { fontSize: d.unit }]}>{unit}</Text>
       </View>
       <IconButton variant="accent" onPress={increment} accessibilityLabel="Augmenter">
-        <Text style={[s.sign, { color: colors.textOnAccent }]}>+</Text>
+        <IconPlus size={22} color={colors.textOnAccent} />
       </IconButton>
     </View>
   );
@@ -51,5 +52,4 @@ const s = StyleSheet.create({
   valueBox: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, minWidth: 90, justifyContent: 'center' },
   value: { fontFamily: fonts.extraBold, fontWeight: '900', color: colors.text },
   unit: { fontFamily: fonts.bold, fontWeight: '700', color: colors.acL, paddingBottom: 4 },
-  sign: { fontSize: 26, color: colors.text, lineHeight: 30 },
 });
