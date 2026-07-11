@@ -8,12 +8,15 @@ import Animated, {
 import { useFocusEffect, CompositeNavigationProp } from "@react-navigation/native";
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { IconSettings, IconBabyBottle } from '@tabler/icons-react-native';
 import { RootStackParamList, TabParamList } from '../navigation/AppNavigator';
 import { useBottlesForToday } from '../hooks/useBottlesForToday';
 import { SkeletonRow } from '../components/SkeletonRow';
+import { Card } from '../components/Card';
+import { QtyBadge } from '../components/QtyBadge';
 import { Bottle } from "../storage/bottleStorage";
 import { getSettings, Settings } from "../storage/settingsStorage";
-import { DAILY_GOAL_DEFAULT, BADGE_GREEN_MIN, BADGE_ORANGE_MAX } from "../config/constants";
+import { DAILY_GOAL_DEFAULT } from "../config/constants";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography, fonts } from "../theme/typography";
@@ -35,19 +38,6 @@ type HomeNavigationProp = CompositeNavigationProp<
 function timeStr(iso: string): string {
   const d = new Date(iso);
   return `${d.getHours()}h${String(d.getMinutes()).padStart(2, '0')}`;
-}
-
-// ── QtyBadge ───────────────────────────────────────────────────────────────────
-function QtyBadge({ qty }: { qty: number }) {
-  const good = qty >= BADGE_GREEN_MIN, low = qty <= BADGE_ORANGE_MAX;
-  const bg  = good ? colors.goodBg  : low ? colors.lowBg  : colors.border;
-  const bdr = good ? colors.goodBdr : low ? colors.lowBdr : colors.accentBdr;
-  const col = good ? colors.goodText: low ? colors.lowText: colors.acL;
-  return (
-    <View style={[s.badge, { backgroundColor: bg, borderColor: bdr }]}>
-      <Text style={[s.badgeText, { color: col }]}>{qty} ml</Text>
-    </View>
-  );
 }
 
 // ── HomeBibRow — FadeIn + slideUp avec délai progressif ───────────────────────
@@ -72,7 +62,7 @@ const HomeBibRow = React.memo(function HomeBibRow({ item, index, triggerKey }: {
     <Animated.View style={animStyle}>
       <View style={s.bibRow}>
         <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
-        <Text style={s.bottleIcon}>🍼</Text>
+        <IconBabyBottle size={15} color={colors.muted} />
         <Text style={s.bibName}>Biberon</Text>
         <QtyBadge qty={item.quantity} />
       </View>
@@ -134,15 +124,11 @@ export default function HomeScreen({ navigation }: { navigation: HomeNavigationP
             <TouchableOpacity
               onPress={() => navigation.navigate('Paramètres')}
               style={s.settingsBtn}
+              activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Ouvrir les paramètres"
             >
-              <Text
-                style={s.settingsIcon}
-                accessibilityLabel="icône paramètres"
-                accessibilityRole="image"
-                importantForAccessibility="no"
-              >⚙️</Text>
+              <IconSettings size={18} color={colors.muted} />
             </TouchableOpacity>
           </View>
           <Text style={s.greet}>{greet}</Text>
@@ -151,31 +137,33 @@ export default function HomeScreen({ navigation }: { navigation: HomeNavigationP
         </View>
 
         {/* ── Carte Total du jour ── */}
-        <Animated.View style={[s.card, cardAnimStyle]}>
-          <Text style={s.sectionLabel}>TOTAL DU JOUR</Text>
+        <Animated.View style={cardAnimStyle}>
+          <Card style={s.card}>
+            <Text style={s.sectionLabel}>TOTAL DU JOUR</Text>
 
-          <View style={s.totalRow}>
-            <View style={s.totalLeft}>
-              <Text style={s.totalNum}>{total}</Text>
-              <Text style={s.totalUnit}>ml</Text>
+            <View style={s.totalRow}>
+              <View style={s.totalLeft}>
+                <Text style={s.totalNum}>{total}</Text>
+                <Text style={s.totalUnit}>ml</Text>
+              </View>
+              <View style={s.goalBox}>
+                <Text style={s.goalLabel}>Objectif</Text>
+                <Text style={s.goalNum}>{settings.dailyGoal} ml</Text>
+              </View>
             </View>
-            <View style={s.goalBox}>
-              <Text style={s.goalLabel}>Objectif</Text>
-              <Text style={s.goalNum}>{settings.dailyGoal} ml</Text>
+
+            {/* Barre de progression */}
+            <View style={s.progressBg}>
+              <View style={[s.progressFill, { width: `${pct}%` as any }]} />
             </View>
-          </View>
 
-          {/* Barre de progression */}
-          <View style={s.progressBg}>
-            <View style={[s.progressFill, { width: `${pct}%` as any }]} />
-          </View>
-
-          <View style={s.progressMeta}>
-            <Text style={s.mutedText}>
-              {bottles.length} biberon{bottles.length > 1 ? 's' : ''} · Dernier : {lastTime}
-            </Text>
-            <Text style={s.pctText}>{pct} %</Text>
-          </View>
+            <View style={s.progressMeta}>
+              <Text style={s.mutedText}>
+                {bottles.length} biberon{bottles.length > 1 ? 's' : ''} · Dernier : {lastTime}
+              </Text>
+              <Text style={s.pctText}>{pct} %</Text>
+            </View>
+          </Card>
         </Animated.View>
 
         {/* ── Biberons du jour ── */}
@@ -184,6 +172,7 @@ export default function HomeScreen({ navigation }: { navigation: HomeNavigationP
             <Text style={s.sectionTitle}>Biberons du jour</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('Historique')}
+              activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Voir tout l'historique"
             >
@@ -221,20 +210,13 @@ const s = StyleSheet.create({
   header:   { padding: spacing.lg, paddingBottom: spacing.xl },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
   settingsBtn:  { padding: 10 },
-  settingsIcon: { fontSize: 18 },
-  dateLabel:{ ...typography.caption, color: colors.muted },
-  greet:    { ...typography.caption, color: colors.muted, fontWeight: '500' },
-  name:     { fontFamily: fonts.extraBold, fontSize: 40, fontWeight: '900', color: colors.text, lineHeight: 44, letterSpacing: -0.5, marginTop: 1 },
+  dateLabel:{ ...typography.small, color: colors.muted },
+  greet:    { ...typography.small, color: colors.muted, fontWeight: '500' },
+  name:     { ...typography.h1, color: colors.text, marginTop: 1 },
   subtitle: { ...typography.small, color: colors.muted, marginTop: 4 },
 
   // Carte total
-  card: {
-    marginHorizontal: spacing.lg,
-    marginBottom: 22,
-    padding: spacing.xl,
-    backgroundColor: colors.card,
-    borderRadius: 16,
-  },
+  card: { marginHorizontal: spacing.lg, marginBottom: 22 },
   sectionLabel: {
     ...typography.label,
     color: colors.muted,
@@ -243,22 +225,22 @@ const s = StyleSheet.create({
   },
   totalRow:  { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 },
   totalLeft: { flexDirection: 'row', alignItems: 'flex-end', gap: 7 },
-  totalNum:  { fontFamily: fonts.extraBold, fontSize: 56, fontWeight: '900', color: colors.text, lineHeight: 56 },
-  totalUnit: { fontFamily: fonts.bold,      fontSize: 19, fontWeight: '700', color: colors.acL, paddingBottom: 4 },
+  totalNum:  { ...typography.display, color: colors.text },
+  totalUnit: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: colors.acL, paddingBottom: 4 },
   goalBox:   { alignItems: 'flex-end', paddingBottom: 4 },
   goalLabel: { ...typography.label, color: colors.muted, marginBottom: 2 },
-  goalNum:   { fontFamily: fonts.extraBold, fontSize: 17, fontWeight: '800', color: colors.text },
+  goalNum:   { ...typography.body, color: colors.text, fontWeight: '700' },
 
   progressBg:   { backgroundColor: colors.progressBg, borderRadius: 99, height: 6, overflow: 'hidden', marginBottom: 10 },
   progressFill: { height: '100%', borderRadius: 99, backgroundColor: colors.accent },
   progressMeta: { flexDirection: 'row', justifyContent: 'space-between' },
-  mutedText:    { ...typography.caption, color: colors.muted },
-  pctText:      { ...typography.caption, fontWeight: '700', color: colors.acL },
+  mutedText:    { ...typography.small, color: colors.muted },
+  pctText:      { ...typography.small, fontWeight: '700', color: colors.acL },
 
   // Section biberons
   section:       { paddingHorizontal: spacing.lg },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle:  { fontFamily: fonts.extraBold, fontSize: 17, fontWeight: '800', color: colors.text },
+  sectionTitle:  { ...typography.h2, color: colors.text },
   seeAll:        { ...typography.small, color: colors.accent, fontWeight: '700' },
 
   bibRow: {
@@ -268,15 +250,7 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   bibTime:    { ...typography.small, color: colors.muted, minWidth: 42 },
-  bottleIcon: { fontSize: 16 },
-  bibName:    { fontFamily: fonts.semiBold, flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
-
+  bibName:    { fontFamily: fonts.semiBold, flex: 1, fontSize: 15, fontWeight: '600', color: colors.text },
 
   empty:  { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 24 },
-
-  // Badge quantité
-
-  badge:     { borderWidth: 1, borderRadius: 10, paddingVertical: 3, paddingHorizontal: 10 },
-  badgeText: { fontFamily: fonts.bold, fontSize: 12, fontWeight: '700' },
-
 });
