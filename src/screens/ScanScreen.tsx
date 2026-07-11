@@ -6,9 +6,12 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
+import { IconCamera, IconCircleCheck, IconX } from '@tabler/icons-react-native';
 import { saveBottle } from '../storage/bottleStorage';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { radius, circleRadius } from '../theme/radius';
 import { typography, fonts } from '../theme/typography';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -33,7 +36,11 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
   const isScanningRef                   = useRef(true);
 
   useEffect(() => {
-    if (!permission?.granted) requestPermission();
+    if (!permission?.granted) {
+      requestPermission().then(result => {
+        if (!result.granted) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      });
+    }
   }, []);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
@@ -43,12 +50,14 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
     let parsed: { quantity?: string; notes?: string } = {};
     try { parsed = JSON.parse(data); }
     catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       Alert.alert('QR invalide', 'Le QR code ne contient pas de JSON valide.');
       isScanningRef.current = true;
       setScanning(true);
       return;
     }
     if (!parsed.quantity) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       Alert.alert('Données manquantes', 'Le champ "quantity" est absent du QR code.');
       isScanningRef.current = true;
       setScanning(true);
@@ -57,12 +66,14 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
     try {
       await saveBottle(parsed.quantity, new Date(), parsed.notes);
       setScannedData(data);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         'Biberon enregistré',
         `${parsed.quantity} ml ajoutés avec succès.`,
         [{ text: 'OK', onPress: () => { isScanningRef.current = true; setScanning(true); } }],
       );
     } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       Alert.alert('Erreur', 'Impossible de sauvegarder le biberon.');
       isScanningRef.current = true;
       setScanning(true);
@@ -90,11 +101,12 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
   if (!permission?.granted) {
     return (
       <View style={s.permContainer}>
-        <Text style={s.permIcon}>📷</Text>
+        <IconCamera size={48} color={colors.muted} />
         <Text style={s.permText}>Permission caméra requise</Text>
         <TouchableOpacity
           style={s.permBtn}
           onPress={requestPermission}
+          activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel="Autoriser l'accès à la caméra"
         >
@@ -108,11 +120,12 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
   if (!scanning && scannedData) {
     return (
       <View style={s.resultContainer}>
-        <Text style={s.resultIcon}>✅</Text>
+        <IconCircleCheck size={48} color={colors.success} />
         <Text style={s.resultText}>Biberon enregistré</Text>
         <TouchableOpacity
           style={s.permBtn}
           onPress={restartScan}
+          activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel="Scanner à nouveau"
         >
@@ -130,10 +143,11 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
       <TouchableOpacity
         onPress={() => navigation.navigate('Ajout')}
         style={s.closeBtn}
+        activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel="Fermer le scanner"
       >
-        <Text style={s.closeIcon}>✕</Text>
+        <IconX size={14} color={colors.text} />
       </TouchableOpacity>
       <Text style={s.headerTitle}>Scanner</Text>
       <Text style={s.headerSub}>Identifiez votre biberon</Text>
@@ -172,6 +186,7 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
       <TouchableOpacity
         style={s.manualBtn}
         onPress={() => navigation.navigate('Ajout')}
+        activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel="Saisir manuellement"
       >
@@ -194,12 +209,11 @@ const s = StyleSheet.create({
   // Header
   closeBtn: {
     alignSelf: 'flex-start',
-    width: 36, height: 36, borderRadius: 18,
+    width: 36, height: 36, borderRadius: circleRadius(36),
     backgroundColor: colors.card,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 8,
   },
-  closeIcon:    { color: colors.text, fontSize: 14 },
   headerTitle:  { fontFamily: fonts.extraBold, fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 4 },
   headerSub:    { ...typography.small, color: colors.muted, marginBottom: 36 },
 
@@ -243,7 +257,7 @@ const s = StyleSheet.create({
 
   // Instructions
   instruction:    { fontFamily: fonts.bold, fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4, textAlign: 'center' },
-  instructionSub: { ...typography.caption, color: colors.muted, marginBottom: 32, textAlign: 'center' },
+  instructionSub: { ...typography.small, color: colors.muted, marginBottom: 32, textAlign: 'center' },
 
   // Séparateur
   separator: { flexDirection: 'row', alignItems: 'center', gap: 12, width: '100%', marginBottom: 20 },
@@ -255,7 +269,7 @@ const s = StyleSheet.create({
     width: '100%', paddingVertical: 14,
     backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.accent,
-    borderRadius: 14, alignItems: 'center',
+    borderRadius: radius.md, alignItems: 'center',
   },
   manualBtnText: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: colors.text },
 
@@ -266,10 +280,9 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     gap: 16, paddingHorizontal: 32,
   },
-  permIcon: { fontSize: 48 },
   permText: { ...typography.body, color: colors.muted, textAlign: 'center' },
   permBtn: {
-    backgroundColor: colors.accent, borderRadius: 12,
+    backgroundColor: colors.accent, borderRadius: radius.md,
     paddingVertical: 12, paddingHorizontal: 24,
   },
   permBtnText: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: colors.textOnAccent },
@@ -281,6 +294,5 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     gap: 16, paddingHorizontal: 32,
   },
-  resultIcon: { fontSize: 48 },
   resultText: { fontFamily: fonts.bold, fontSize: 18, fontWeight: '700', color: colors.text },
 });
