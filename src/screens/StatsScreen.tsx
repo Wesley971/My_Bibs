@@ -9,6 +9,7 @@ import { DAILY_GOAL_DEFAULT } from '../config/constants';
 import { SkeletonRow } from '../components/SkeletonRow';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { radius } from '../theme/radius';
 import { typography, fonts } from '../theme/typography';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -200,12 +201,12 @@ const s = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: 100 },
 
   header: { paddingTop: 6, marginBottom: 24 },
-  title:  { fontFamily: fonts.extraBold, fontSize: 28, fontWeight: '900', color: colors.text },
+  title:  { ...typography.h1, color: colors.text },
   subtitle: { ...typography.small, color: colors.muted, marginTop: 2 },
 
   card: {
     backgroundColor: colors.card,
-    borderRadius: 16,
+    borderRadius: radius.md,
     padding: spacing.xl,
     marginBottom: spacing.xxl,
     borderWidth: 1,
@@ -264,7 +265,7 @@ const s = StyleSheet.create({
     opacity: 0.7,
   },
   goalLegendText: {
-    ...typography.caption,
+    ...typography.small,
     color: colors.muted,
   },
 
@@ -280,13 +281,13 @@ const s = StyleSheet.create({
   metricCard: {
     flex: 1,
     backgroundColor: colors.card,
-    borderRadius: 16,
+    borderRadius: radius.md,
     padding: spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
   },
   metricLabel: {
-    ...typography.caption,
+    ...typography.small,
     color: colors.muted,
     marginBottom: 8,
   },
@@ -297,7 +298,7 @@ const s = StyleSheet.create({
     color: colors.text,
   },
   metricSub: {
-    ...typography.caption,
+    ...typography.small,
     color: colors.muted,
     marginTop: 4,
   },
