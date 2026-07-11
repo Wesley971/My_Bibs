@@ -3,15 +3,19 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator,
 } from "react-native";
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { IconChevronLeft, IconDownload, IconCircleCheck } from '@tabler/icons-react-native';
 import { getSettings, saveSettings } from "../storage/settingsStorage";
 import { getBottles } from "../storage/bottleStorage";
 import { exportBottlesToCSV } from "../utils/exportUtils";
 import { shareCSV } from "../utils/shareUtils";
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { Stepper } from '../components/Stepper';
+import { Button } from '../components/Button';
+import { IconButton } from '../components/IconButton';
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
+import { radius } from "../theme/radius";
 import { typography, fonts } from "../theme/typography";
 
 type SettingsNavigationProp = StackNavigationProp<RootStackParamList, 'Paramètres'>;
@@ -72,14 +76,9 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsNav
       >
         {/* ── Header ── */}
         <View style={s.headerRow}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={s.backBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Retour"
-          >
-            <Text style={s.backIcon}>‹</Text>
-          </TouchableOpacity>
+          <IconButton size="sm" onPress={() => navigation.goBack()} accessibilityLabel="Retour">
+            <IconChevronLeft size={20} color={colors.text} />
+          </IconButton>
           <View>
             <Text style={s.headerTitle}>Paramètres</Text>
             <Text style={s.headerSub}>Configurer l'application</Text>
@@ -102,46 +101,29 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsNav
         {/* ── Objectif journalier ── */}
         <Text style={[s.sectionLabel, { marginTop: 24 }]}>OBJECTIF JOURNALIER</Text>
         <View style={s.card}>
-          <View style={s.goalRow}>
-            <TouchableOpacity
-              style={s.adjBtn}
-              onPress={() => setDailyGoal(g => Math.max(200, g - 50))}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Diminuer l'objectif journalier"
-            >
-              <Text style={s.adjBtnText}>−</Text>
-            </TouchableOpacity>
-
-            <View style={s.goalValueBox}>
-              <Text style={s.goalValue}>{dailyGoal}</Text>
-              <Text style={s.goalUnit}>ml / jour</Text>
-            </View>
-
-            <TouchableOpacity
-              style={[s.adjBtn, s.adjBtnPlus]}
-              onPress={() => setDailyGoal(g => g + 50)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Augmenter l'objectif journalier"
-            >
-              <Text style={s.adjBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
+          <Stepper
+            value={dailyGoal}
+            unit="ml / jour"
+            size="md"
+            onDecrement={() => setDailyGoal(g => Math.max(200, g - 50))}
+            onIncrement={() => setDailyGoal(g => g + 50)}
+          />
         </View>
 
         {/* ── Bouton Enregistrer ── */}
-        <TouchableOpacity
-          style={[s.saveBtn, saved && s.saveBtnSuccess]}
+        <Button
+          success={saved}
           onPress={handleSave}
-          activeOpacity={0.85}
-          accessibilityRole="button"
+          style={s.saveBtn}
           accessibilityLabel="Enregistrer les paramètres"
         >
-          <Text style={s.saveBtnText}>
-            {saved ? '✓  Enregistré !' : 'Enregistrer'}
-          </Text>
-        </TouchableOpacity>
+          {saved ? (
+            <View style={s.saveBtnSuccessRow}>
+              <IconCircleCheck size={18} color={colors.textOnAccent} />
+              <Text style={s.saveBtnText}>Enregistré !</Text>
+            </View>
+          ) : 'Enregistrer'}
+        </Button>
 
         {/* ── Données ── */}
         <Text style={[s.sectionLabel, { marginTop: 36 }]}>DONNÉES</Text>
@@ -156,7 +138,7 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsNav
           {isExporting ? (
             <ActivityIndicator size="small" color={colors.accent} />
           ) : (
-            <MaterialCommunityIcons name="export" size={22} color={colors.accent} />
+            <IconDownload size={22} color={colors.accent} />
           )}
           <View style={s.exportTextCol}>
             <Text style={s.exportLabel}>Exporter les données</Text>
@@ -177,14 +159,8 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     gap: 14, paddingTop: 6, marginBottom: 28,
   },
-  backBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: colors.card,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  backIcon:    { color: colors.text, fontSize: 24, lineHeight: 30, marginTop: -2 },
   headerTitle: { fontFamily: fonts.extraBold, fontSize: 20, fontWeight: '800', color: colors.text },
-  headerSub:   { ...typography.caption, color: colors.muted, marginTop: 1 },
+  headerSub:   { ...typography.small, color: colors.muted, marginTop: 1 },
 
   sectionLabel: {
     ...typography.label, color: colors.muted,
@@ -194,7 +170,7 @@ const s = StyleSheet.create({
   // Champ prénom
   inputBox: {
     backgroundColor: colors.card,
-    borderRadius: 14,
+    borderRadius: radius.md,
     borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: spacing.xl, paddingVertical: 14,
   },
@@ -204,24 +180,9 @@ const s = StyleSheet.create({
 
   // Sélecteur objectif
   card: {
-    backgroundColor: colors.card, borderRadius: 16,
+    backgroundColor: colors.card, borderRadius: radius.md,
     padding: spacing.xl, alignItems: 'center',
   },
-  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 20 },
-  adjBtn: {
-    width: 50, height: 50, borderRadius: 25,
-    backgroundColor: colors.card2,
-    borderWidth: 1, borderColor: colors.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  adjBtnPlus: { backgroundColor: colors.accent, borderColor: colors.accent },
-  adjBtnText: { color: colors.text, fontSize: 24, lineHeight: Platform.OS === 'android' ? 30 : 24 },
-  goalValueBox: { alignItems: 'center', minWidth: 110 },
-  goalValue: {
-    fontFamily: fonts.extraBold, fontSize: 44, fontWeight: '900',
-    color: colors.text, lineHeight: 48,
-  },
-  goalUnit: { ...typography.caption, color: colors.muted, marginTop: 2 },
 
   // Export
   exportRow: {
@@ -229,7 +190,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
     backgroundColor: colors.card,
-    borderRadius: 14,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.xl,
@@ -243,20 +204,14 @@ const s = StyleSheet.create({
     color: colors.text,
   },
   exportSub: {
-    ...typography.caption,
+    ...typography.small,
     color: colors.muted,
     marginTop: 2,
   },
 
   // Bouton
-  saveBtn: {
-    marginTop: 32, paddingVertical: 17, borderRadius: 16,
-    backgroundColor: colors.accent, alignItems: 'center',
-    shadowColor: colors.accent, shadowOpacity: 0.38,
-    shadowRadius: 11, shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-  },
-  saveBtnSuccess: { backgroundColor: colors.success },
+  saveBtn: { marginTop: 32 },
+  saveBtnSuccessRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   saveBtnText: {
     fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800',
     color: colors.textOnAccent, letterSpacing: 0.2,
