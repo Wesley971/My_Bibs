@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView,
+  KeyboardAvoidingView, ScrollView,
 } from "react-native";
+import { IconBabyCarriage, IconBabyBottle, IconArrowRight, IconArrowLeft, IconCircleCheck } from '@tabler/icons-react-native';
 import { saveSettings } from "../storage/settingsStorage";
 import { DAILY_GOAL_DEFAULT } from "../config/constants";
+import { Stepper } from '../components/Stepper';
+import { Button } from '../components/Button';
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
+import { radius } from "../theme/radius";
 import { typography, fonts } from "../theme/typography";
 
 type Props = { onDone: () => void };
@@ -44,7 +48,7 @@ export default function OnboardingScreen({ onDone }: Props) {
       {step === 1 ? (
         /* ── Étape 1 : prénom ── */
         <View style={s.step}>
-          <Text style={s.emoji}>👶</Text>
+          <IconBabyCarriage size={48} color={colors.accent} />
           <Text style={s.title}>Quel est le prénom{'\n'}de bébé ?</Text>
           <Text style={s.subtitle}>
             Vous pourrez le modifier dans les paramètres.
@@ -64,48 +68,42 @@ export default function OnboardingScreen({ onDone }: Props) {
             />
           </View>
 
-          <TouchableOpacity style={s.btn} onPress={() => setStep(2)} activeOpacity={0.85}>
-            <Text style={s.btnText}>Suivant →</Text>
-          </TouchableOpacity>
+          <Button onPress={() => setStep(2)} style={s.btn}>
+            <View style={s.btnRow}>
+              <Text style={s.btnText}>Suivant</Text>
+              <IconArrowRight size={18} color={colors.textOnAccent} />
+            </View>
+          </Button>
         </View>
       ) : (
         /* ── Étape 2 : objectif ── */
         <View style={s.step}>
-          <Text style={s.emoji}>🍼</Text>
+          <IconBabyBottle size={48} color={colors.accent} />
           <Text style={s.title}>Objectif journalier</Text>
           <Text style={s.subtitle}>
             Quantité totale de lait par jour{'\n'}(recommandé : 700–900 ml).
           </Text>
 
-          <View style={s.goalRow}>
-            <TouchableOpacity
-              style={s.adjBtn}
-              onPress={() => setDailyGoal(g => Math.max(200, g - 50))}
-              activeOpacity={0.7}
-            >
-              <Text style={s.adjBtnText}>−</Text>
-            </TouchableOpacity>
-
-            <View style={s.goalValueBox}>
-              <Text style={s.goalValue}>{dailyGoal}</Text>
-              <Text style={s.goalUnit}>ml</Text>
-            </View>
-
-            <TouchableOpacity
-              style={[s.adjBtn, s.adjBtnPlus]}
-              onPress={() => setDailyGoal(g => g + 50)}
-              activeOpacity={0.7}
-            >
-              <Text style={s.adjBtnText}>+</Text>
-            </TouchableOpacity>
+          <View style={s.stepperBox}>
+            <Stepper
+              value={dailyGoal}
+              onDecrement={() => setDailyGoal(g => Math.max(200, g - 50))}
+              onIncrement={() => setDailyGoal(g => g + 50)}
+            />
           </View>
 
-          <TouchableOpacity style={s.btn} onPress={handleStart} activeOpacity={0.85}>
-            <Text style={s.btnText}>Commencer ✓</Text>
-          </TouchableOpacity>
+          <Button onPress={handleStart} style={s.btn}>
+            <View style={s.btnRow}>
+              <IconCircleCheck size={18} color={colors.textOnAccent} />
+              <Text style={s.btnText}>Commencer</Text>
+            </View>
+          </Button>
 
-          <TouchableOpacity style={s.backLink} onPress={() => setStep(1)}>
-            <Text style={s.backLinkText}>← Retour</Text>
+          <TouchableOpacity style={s.backLink} onPress={() => setStep(1)} activeOpacity={0.7}>
+            <View style={s.btnRow}>
+              <IconArrowLeft size={14} color={colors.muted} />
+              <Text style={s.backLinkText}>Retour</Text>
+            </View>
           </TouchableOpacity>
         </View>
       )}
@@ -142,8 +140,8 @@ const s = StyleSheet.create({
 
   // Contenu d'étape
   step: { alignItems: 'center' },
-  emoji: { fontSize: 48, marginBottom: 20 },
   title: {
+    marginTop: 20,
     fontFamily: fonts.extraBold, fontSize: 28, fontWeight: '900',
     color: colors.text, textAlign: 'center', lineHeight: 34, marginBottom: 10,
   },
@@ -155,7 +153,7 @@ const s = StyleSheet.create({
   inputBox: {
     width: '100%',
     backgroundColor: colors.card,
-    borderRadius: 14,
+    borderRadius: radius.md,
     borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: spacing.xl, paddingVertical: 14,
     marginBottom: 20,
@@ -166,34 +164,11 @@ const s = StyleSheet.create({
   },
 
   // Sélecteur objectif
-  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 28 },
-  adjBtn: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: colors.card2,
-    borderWidth: 1, borderColor: colors.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  adjBtnPlus: { backgroundColor: colors.accent, borderColor: colors.accent },
-  adjBtnText: { color: colors.text, fontSize: 26, lineHeight: Platform.OS === 'android' ? 32 : 26 },
-  goalValueBox: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
-  goalValue: {
-    fontFamily: fonts.extraBold, fontSize: 52, fontWeight: '900',
-    color: colors.text, lineHeight: 52,
-  },
-  goalUnit: {
-    fontFamily: fonts.bold, fontSize: 18, fontWeight: '700',
-    color: colors.acL, paddingBottom: 4,
-  },
+  stepperBox: { marginBottom: 28 },
 
   // Bouton principal
-  btn: {
-    width: '100%', paddingVertical: 17, borderRadius: 16,
-    backgroundColor: colors.accent, alignItems: 'center',
-    shadowColor: colors.accent,
-    shadowOpacity: 0.38, shadowRadius: 11,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8, marginBottom: 16,
-  },
+  btn: { marginBottom: 16 },
+  btnRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   btnText: {
     fontFamily: fonts.extraBold, fontSize: 16, fontWeight: '800', color: colors.textOnAccent,
   },
