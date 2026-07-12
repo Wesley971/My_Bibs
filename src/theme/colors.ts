@@ -1,4 +1,19 @@
 // Design tokens synchronisés depuis "My Bibs Design System" (claude.ai/design)
+
+// Cuivre désaturé — base de accentCopper ET de toute la famille "bas" (badges
+// qty ≤ 75 ml). Isolé en constante pour que lowBg/lowText en dérivent
+// réellement au lieu de dupliquer le hex à la main (cf. fusion des verts
+// success/goodText, même principe).
+const COPPER = '#C99383' as const;
+
+function hexToRgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 export const colors = {
   // ── Fonds ──────────────────────────────────────────────────
   bg:     '#16213E', // fond principal de l'app
@@ -9,8 +24,7 @@ export const colors = {
   // ── Accent lavande + palette élargie ───────────────────────
   accent:       '#A78BFA', // violet — LA touche : CTA, focus, la seule couleur "décorative"
   acL:          '#C4B5FD', // violet clair (unités, labels secondaires)
-  accentCopper: '#C99383', // cuivre désaturé — second accent chaud, réservé aux détails/alerte
-  accentDeep:   '#6D5AAE', // violet profond — arrière-plans très discrets uniquement
+  accentCopper: COPPER, // cuivre désaturé — second accent chaud, réservé aux détails/alerte
 
   // ── Texte ──────────────────────────────────────────────────
   text:   '#F8F8FF', // texte principal (blanc cassé)
@@ -19,24 +33,26 @@ export const colors = {
   // ── Bordures : quasi invisibles, réservées aux champs de saisie ──
   border: 'rgba(255,255,255,0.08)',
 
+  // ── Icon circle (IconButton variant par défaut) — plat, pas de dégradé card ──
+  iconCircleBg: 'rgba(255,255,255,0.05)',
+
+  // ── Starfield — couleur exacte du starfield de référence ──
+  star: '#C9C2E8',
+
   // ── Sémantique : un seul ton désaturé par concept ──────────
   success: '#B7CDB1', // sauge désaturée (biberon enregistré)
-  alert:   '#C99383', // cuivre désaturé (= accentCopper)
   error:   '#C97C7C', // rouge désaturé (suppression)
 
   // ── QtyBadge — seuils quantité (un ton chacun, plus de bordure dure) ──
   goodBg:   'rgba(183,205,177,0.13)', // qty ≥ 130 ml
-  goodBdr:  'transparent',
   goodText: '#B7CDB1',
-  lowBg:    'rgba(201,147,131,0.15)', // qty ≤ 75 ml
-  lowBdr:   'transparent',
-  lowText:  '#D9A98B',
+  lowBg:    hexToRgba(COPPER, 0.15), // qty ≤ 75 ml — dérivé de accentCopper
+  lowText:  COPPER, // = accentCopper
 
   // ── Texte sur fonds accentués — bleu-nuit, plus doux que le blanc pur ──
   textOnAccent: '#16213E',
 
   // ── Accent lavande — variantes opaques ──────────────────────
-  accentBdr:    'rgba(167,139,250,0.35)', // bordure de badge neutre
   accentDim:    'rgba(167,139,250,0.25)', // point de pagination inactif
   accentSubtle: 'rgba(167,139,250,0.15)', // fond badge jour / mini-progress
   progressBg:   'rgba(255,255,255,0.07)', // piste de la barre de progression

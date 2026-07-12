@@ -62,7 +62,9 @@ const HomeBibRow = React.memo(function HomeBibRow({ item, index, triggerKey }: {
     <Animated.View style={animStyle}>
       <View style={s.bibRow}>
         <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
-        <IconBabyBottle size={15} color={colors.muted} />
+        <View style={s.bibIconCircle}>
+          <IconBabyBottle size={14} color={colors.acL} />
+        </View>
         <Text style={s.bibName}>Biberon</Text>
         <QtyBadge qty={item.quantity} />
       </View>
@@ -105,8 +107,8 @@ export default function HomeScreen({ navigation }: { navigation: HomeNavigationP
   const name = settings.childName || 'bébé';
   const greet    = h < 6 || h >= 21 ? 'Bonne nuit,' : h < 12 ? 'Bonjour,' : 'Bon après-midi,';
   const subtitle = h < 6 || h >= 21
-    ? 'Tout se passe bien, dors tranquille ✨'
-    : `Tout va bien, ${name} est en pleine forme ✨`;
+    ? 'Tout se passe bien, dors tranquille'
+    : `Tout va bien, ${name} est en pleine forme`;
   const dateStr  =
     `${DAY_NAMES[now.getDay()]}, ${now.getDate()} ${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`;
 
@@ -224,9 +226,9 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
   },
   totalRow:  { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 },
-  totalLeft: { flexDirection: 'row', alignItems: 'flex-end', gap: 7 },
+  totalLeft: { flexDirection: 'row', alignItems: 'baseline', gap: 7 },
   totalNum:  { ...typography.display, color: colors.text },
-  totalUnit: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: colors.acL, paddingBottom: 4 },
+  totalUnit: { fontFamily: fonts.bold, fontSize: 15, fontWeight: '700', color: colors.acL },
   goalBox:   { alignItems: 'flex-end', paddingBottom: 4 },
   goalLabel: { ...typography.label, color: colors.muted, marginBottom: 2 },
   goalNum:   { ...typography.body, color: colors.text, fontWeight: '700' },
@@ -250,6 +252,12 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   bibTime:    { ...typography.small, color: colors.muted, minWidth: 42 },
+  bibIconCircle: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: colors.accentSubtle,
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
   bibName:    { fontFamily: fonts.semiBold, flex: 1, fontSize: 15, fontWeight: '600', color: colors.text },
 
   empty:  { ...typography.body, color: colors.muted, textAlign: 'center', marginTop: 24 },

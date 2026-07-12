@@ -10,8 +10,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-const STAR_COUNT = 40;
+const STAR_COUNT = 8;
 const SIZES = [1.5, 2, 2.5, 3] as const;
+const OPACITY_MIN = 0.25;
+const OPACITY_MAX = 0.5;
 
 type StarData = {
   id: number;
@@ -33,15 +35,15 @@ const STARS: StarData[] = Array.from({ length: STAR_COUNT }, (_, i) => ({
 }));
 
 const Star = memo(function Star({ data }: { data: StarData }) {
-  const opacity = useSharedValue(0.3 + Math.random() * 0.25);
+  const opacity = useSharedValue(OPACITY_MIN + Math.random() * (OPACITY_MAX - OPACITY_MIN));
 
   useEffect(() => {
     opacity.value = withDelay(
       data.delay,
       withRepeat(
         withSequence(
-          withTiming(0.95, { duration: data.duration }),
-          withTiming(0.3, { duration: data.duration }),
+          withTiming(OPACITY_MAX, { duration: data.duration }),
+          withTiming(OPACITY_MIN, { duration: data.duration }),
         ),
         -1,
         false,
@@ -84,6 +86,6 @@ const styles = StyleSheet.create({
   },
   star: {
     position: 'absolute',
-    backgroundColor: colors.text,
+    backgroundColor: colors.star,
   },
 });

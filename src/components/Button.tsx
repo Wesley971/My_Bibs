@@ -1,10 +1,11 @@
-import { ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { ReactNode, useState } from 'react';
+import { ActivityIndicator, LayoutChangeEvent, Platform, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { colors } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { typography, fonts } from '../theme/typography';
 import { accentShadow } from '../theme/shadows';
+import { AccentGlow } from './AccentGlow';
 
 type Variant = 'primary' | 'outline' | 'ghost';
 
@@ -26,6 +27,15 @@ export function Button({ children, variant = 'primary', disabled = false, loadin
   const isDisabled = disabled || loading;
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  // Le glow Android (AccentGlow) a besoin des dimensions réelles du bouton
+  // pour dimensionner son dégradé radial — le bouton fait width:'100%',
+  // donc sa largeur en px n'est connue qu'après layout.
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const onGlowHostLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setSize({ width, height });
+  };
 
   const isMainCta = variant === 'primary';
   const activeOpacity = isMainCta ? 0.85 : 0.7;
@@ -64,7 +74,16 @@ export function Button({ children, variant = 'primary', disabled = false, loadin
     </TouchableOpacity>
   );
 
-  return isMainCta ? <Animated.View style={animStyle}>{content}</Animated.View> : content;
+  if (!isMainCta) return content;
+
+  return (
+    <Animated.View style={animStyle} onLayout={onGlowHostLayout}>
+      {Platform.OS === 'android' && !success && size && (
+        <AccentGlow width={size.width} height={size.height} borderRadius={radius.lg} />
+      )}
+      {content}
+    </Animated.View>
+  );
 }
 
 const s = StyleSheet.create({

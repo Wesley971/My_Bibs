@@ -1,6 +1,5 @@
 // Espacements extraits des paddings/margins du design HTML
 export const spacing = {
-  xs:   4,  // gap interne petits éléments
   sm:   8,  // gap chips / petits écarts
   md:   12, // padding lignes de liste
   lg:   16, // padding horizontal standard (sections)

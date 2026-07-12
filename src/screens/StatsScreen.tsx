@@ -7,10 +7,9 @@ import { getSettings } from '../storage/settingsStorage';
 import { getLast7DaysData, getCurrentStreak, DayStats } from '../utils/statsUtils';
 import { DAILY_GOAL_DEFAULT } from '../config/constants';
 import { SkeletonRow } from '../components/SkeletonRow';
+import { Card } from '../components/Card';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
-import { radius } from '../theme/radius';
-import { cardShadow } from '../theme/shadows';
 import { typography, fonts } from '../theme/typography';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -26,11 +25,11 @@ function formatShortDate(dateKey: string): string {
 // ── MetricCard ────────────────────────────────────────────────────────────────
 function MetricCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <View style={s.metricCard}>
+    <Card style={s.metricCard}>
       <Text style={s.metricLabel}>{label}</Text>
       <Text style={s.metricValue}>{value}</Text>
       {sub ? <Text style={s.metricSub}>{sub}</Text> : null}
-    </View>
+    </Card>
   );
 }
 
@@ -148,10 +147,10 @@ export default function StatsScreen() {
       ) : (
         <>
           {/* ── Graphique barres ── */}
-          <View style={s.card}>
+          <Card style={s.card}>
             <Text style={s.sectionLabel}>QUANTITÉ PAR JOUR</Text>
             <BarChart dayStats={dayStats} dailyGoal={dailyGoal} />
-          </View>
+          </Card>
 
           {/* ── Métriques 2×2 ── */}
           <View style={s.metricsGrid}>
@@ -180,16 +179,16 @@ export default function StatsScreen() {
           </View>
 
           {/* ── Streak ── */}
-          <View style={[s.card, s.streakCard]}>
+          <Card style={s.streakCard}>
             {streak > 0 ? (
               <>
                 <Text style={s.streakNum}>{streak}</Text>
-                <Text style={s.streakLabel}>jours consécutifs 🔥</Text>
+                <Text style={s.streakLabel}>jours consécutifs</Text>
               </>
             ) : (
               <Text style={s.streakZero}>Objectif non atteint aujourd'hui</Text>
             )}
-          </View>
+          </Card>
         </>
       )}
     </ScrollView>
@@ -206,13 +205,7 @@ const s = StyleSheet.create({
   subtitle: { ...typography.small, color: colors.muted, marginTop: 2 },
 
   card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    padding: spacing.xl,
     marginBottom: spacing.xxl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...cardShadow,
   },
   sectionLabel: {
     ...typography.label,
@@ -282,12 +275,6 @@ const s = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...cardShadow,
   },
   metricLabel: {
     ...typography.small,
@@ -295,9 +282,9 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   metricValue: {
-    fontFamily: fonts.extraBold,
+    fontFamily: fonts.display,
     fontSize: 22,
-    fontWeight: '900',
+    fontWeight: '500',
     color: colors.text,
   },
   metricSub: {
@@ -312,11 +299,8 @@ const s = StyleSheet.create({
     paddingVertical: 32,
   },
   streakNum: {
-    fontFamily: fonts.display,
-    fontSize: 64,
-    fontWeight: '500',
+    ...typography.hero,
     color: colors.text,
-    lineHeight: 64,
   },
   streakLabel: {
     ...typography.body,

@@ -49,7 +49,7 @@ export function Stepper({ value, unit = 'ml', size = 'lg', onDecrement, onIncrem
 
 const s = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 20 },
-  valueBox: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, minWidth: 90, justifyContent: 'center' },
+  valueBox: { flexDirection: 'row', alignItems: 'baseline', gap: 4, minWidth: 90, justifyContent: 'center' },
   value: { fontFamily: fonts.display, fontWeight: '500', color: colors.text },
-  unit: { fontFamily: fonts.bold, fontWeight: '700', color: colors.acL, paddingBottom: 4 },
+  unit: { fontFamily: fonts.bold, fontWeight: '700', color: colors.acL },
 });

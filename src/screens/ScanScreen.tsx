@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Alert,
+  View, Text, StyleSheet, TouchableOpacity, Alert, Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
@@ -13,6 +13,8 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { radius, circleRadius } from '../theme/radius';
 import { typography, fonts } from '../theme/typography';
+import { accentShadowSoft } from '../theme/shadows';
+import { AccentGlow } from '../components/AccentGlow';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -104,12 +106,13 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
         <IconCamera size={48} color={colors.muted} />
         <Text style={s.permText}>Permission caméra requise</Text>
         <TouchableOpacity
-          style={s.permBtn}
+          style={[s.permBtn, accentShadowSoft]}
           onPress={requestPermission}
           activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel="Autoriser l'accès à la caméra"
         >
+          {Platform.OS === 'android' && <AccentGlow borderRadius={radius.md} intensity="soft" />}
           <Text style={s.permBtnText}>Autoriser l'accès</Text>
         </TouchableOpacity>
       </View>
@@ -123,12 +126,13 @@ export default function ScanScreen({ navigation }: { navigation: ScanNavigationP
         <IconCircleCheck size={48} color={colors.success} />
         <Text style={s.resultText}>Biberon enregistré</Text>
         <TouchableOpacity
-          style={s.permBtn}
+          style={[s.permBtn, accentShadowSoft]}
           onPress={restartScan}
           activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel="Scanner à nouveau"
         >
+          {Platform.OS === 'android' && <AccentGlow borderRadius={radius.md} intensity="soft" />}
           <Text style={s.permBtnText}>Scanner à nouveau</Text>
         </TouchableOpacity>
       </View>

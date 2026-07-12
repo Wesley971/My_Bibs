@@ -1,8 +1,9 @@
 import { ReactNode } from 'react';
-import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { colors } from '../theme/colors';
 import { circleRadius } from '../theme/radius';
-import { accentShadowSoft } from '../theme/shadows';
+import { accentShadowSoft, iconButtonShadow } from '../theme/shadows';
+import { AccentGlow } from './AccentGlow';
 
 const SIZES = { sm: 36, md: 50, lg: 60 } as const;
 
@@ -19,6 +20,7 @@ type Props = {
 export function IconButton({ children, size = 'md', variant = 'default', onPress, style, accessibilityLabel }: Props) {
   const d = SIZES[size];
   const isAccent = variant === 'accent';
+  const r = circleRadius(d);
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -30,14 +32,16 @@ export function IconButton({ children, size = 'md', variant = 'default', onPress
         {
           width: d,
           height: d,
-          borderRadius: circleRadius(d),
-          backgroundColor: isAccent ? colors.accent : colors.card2,
+          borderRadius: r,
+          backgroundColor: isAccent ? colors.accent : colors.iconCircleBg,
         },
-        isAccent ? accentShadowSoft : null,
-        !isAccent && { borderWidth: 1, borderColor: colors.border },
+        isAccent ? accentShadowSoft : iconButtonShadow,
         style,
       ]}
     >
+      {isAccent && Platform.OS === 'android' && (
+        <AccentGlow width={d} height={d} borderRadius={r} intensity="soft" />
+      )}
       {children}
     </TouchableOpacity>
   );

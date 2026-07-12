@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { colors } from '../theme/colors';
@@ -7,7 +7,11 @@ import { typography } from '../theme/typography';
 
 export function Toast({ children, visible }: { children: ReactNode; visible: boolean }) {
   const opacity = useSharedValue(0);
-  opacity.value = withTiming(visible ? 1 : 0, { duration: 200 });
+
+  useEffect(() => {
+    opacity.value = withTiming(visible ? 1 : 0, { duration: 200 });
+  }, [visible]);
+
   const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (

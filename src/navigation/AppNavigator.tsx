@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -17,6 +17,7 @@ import OnboardingScreen from "../screens/OnboardingScreen";
 import ScanScreen from "../screens/ScanScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import StatsScreen from "../screens/StatsScreen";
+import { AccentGlow } from "../components/AccentGlow";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 export type RootStackParamList = {
@@ -76,6 +77,7 @@ function TabNavigator() {
               backgroundColor: colors.accent,
               alignItems: 'center', justifyContent: 'center',
             }, accentShadowSoft]}>
+              {Platform.OS === 'android' && <AccentGlow width={60} height={60} borderRadius={circleRadius(60)} intensity="soft" />}
               <IconBabyBottle color={colors.textOnAccent} size={28} />
             </View>
           ),

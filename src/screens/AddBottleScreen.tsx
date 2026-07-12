@@ -3,6 +3,8 @@ import {
   View, Text, TouchableOpacity,
   TextInput, StyleSheet, Platform, Alert,
 } from "react-native";
+import { AccentGlow } from '../components/AccentGlow';
+import { accentShadowSoft, accentShadowSubtle } from '../theme/shadows';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -14,6 +16,7 @@ import { RootStackParamList, TabParamList } from '../navigation/AppNavigator';
 import { saveBottle, updateBottle, Bottle } from "../storage/bottleStorage";
 import { Stepper } from '../components/Stepper';
 import { Button } from '../components/Button';
+import { Card } from '../components/Card';
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { radius } from "../theme/radius";
@@ -109,14 +112,13 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
       </View>
 
       {/* ── Sélecteur quantité ── */}
-      <View style={s.card}>
+      <Card style={s.card}>
         <Stepper
           value={qty}
           onDecrement={() => setQty(q => Math.max(10, q - 10))}
           onIncrement={() => setQty(q => q + 10)}
         />
-        <Text style={s.mlLabel}>ml</Text>
-      </View>
+      </Card>
 
       {/* ── Chips rapides ── */}
       <View style={s.chips}>
@@ -124,11 +126,14 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
           <TouchableOpacity
             key={v}
             onPress={() => setQty(v)}
-            style={[s.chip, qty === v && s.chipActive]}
+            style={[s.chip, qty === v && s.chipActive, qty === v && accentShadowSoft]}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={`Sélectionner ${v} ml`}
           >
+            {qty === v && Platform.OS === 'android' && (
+              <AccentGlow borderRadius={radius.md} intensity="soft" />
+            )}
             <Text style={[s.chipText, qty === v && s.chipTextActive]}>
               {v} ml
             </Text>
@@ -139,16 +144,19 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
       {/* ── Heure ── */}
       <View style={s.fieldBlock}>
         <Text style={s.fieldLabel}>HEURE</Text>
-        <View style={s.fieldRow}>
+        <Card style={s.fieldRow}>
           <IconClock size={16} color={colors.muted} />
           <Text style={s.fieldValue}>{time}</Text>
           <TouchableOpacity
             onPress={setNow}
-            style={s.nowBtn}
+            style={[s.nowBtn, accentShadowSubtle]}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Définir l'heure maintenant"
           >
+            {Platform.OS === 'android' && (
+              <AccentGlow borderRadius={radius.pill} intensity="subtle" />
+            )}
             <Text style={s.nowBtnText}>Maintenant</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -160,7 +168,7 @@ export default function AddBottleScreen({ navigation, route }: { navigation: Add
           >
             <Text style={s.pickBtnText}>Choisir</Text>
           </TouchableOpacity>
-        </View>
+        </Card>
       </View>
       {showPicker && (
         <DateTimePicker
@@ -229,11 +237,9 @@ const s = StyleSheet.create({
 
   // Qty selector
   card: {
-    backgroundColor: colors.card, borderRadius: radius.md,
     paddingVertical: 28, paddingHorizontal: spacing.xl,
     marginBottom: 16, alignItems: 'center',
   },
-  mlLabel: { ...typography.body, color: colors.muted, marginTop: 10 },
 
   // Chips
   chips: {
@@ -258,8 +264,7 @@ const s = StyleSheet.create({
   optional: { textTransform: 'none', fontWeight: '500', opacity: 0.65 },
   fieldRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.card, borderRadius: radius.md,
-    padding: 13, paddingHorizontal: 14, gap: 10,
+    paddingVertical: 13, paddingHorizontal: 14, gap: 10,
   },
   fieldValue: { flex: 1, ...typography.body, color: colors.text },
   nowBtn: {

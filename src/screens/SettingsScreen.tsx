@@ -13,9 +13,9 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { Stepper } from '../components/Stepper';
 import { Button } from '../components/Button';
 import { IconButton } from '../components/IconButton';
+import { Card } from '../components/Card';
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
-import { radius } from "../theme/radius";
 import { typography, fonts } from "../theme/typography";
 
 type SettingsNavigationProp = StackNavigationProp<RootStackParamList, 'Paramètres'>;
@@ -87,7 +87,7 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsNav
 
         {/* ── Prénom ── */}
         <Text style={s.sectionLabel}>PRÉNOM DE BÉBÉ</Text>
-        <View style={s.inputBox}>
+        <Card style={s.inputBox}>
           <TextInput
             style={s.input}
             value={childName}
@@ -96,11 +96,11 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsNav
             placeholderTextColor={colors.muted}
             autoCapitalize="words"
           />
-        </View>
+        </Card>
 
         {/* ── Objectif journalier ── */}
         <Text style={[s.sectionLabel, { marginTop: 24 }]}>OBJECTIF JOURNALIER</Text>
-        <View style={s.card}>
+        <Card style={s.card}>
           <Stepper
             value={dailyGoal}
             unit="ml / jour"
@@ -108,7 +108,7 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsNav
             onDecrement={() => setDailyGoal(g => Math.max(200, g - 50))}
             onIncrement={() => setDailyGoal(g => g + 50)}
           />
-        </View>
+        </Card>
 
         {/* ── Bouton Enregistrer ── */}
         <Button
@@ -128,22 +128,23 @@ export default function SettingsScreen({ navigation }: { navigation: SettingsNav
         {/* ── Données ── */}
         <Text style={[s.sectionLabel, { marginTop: 36 }]}>DONNÉES</Text>
         <TouchableOpacity
-          style={[s.exportRow, isExporting && s.exportRowDisabled]}
           onPress={handleExport}
           disabled={isExporting}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Exporter les données au format CSV"
         >
-          {isExporting ? (
-            <ActivityIndicator size="small" color={colors.accent} />
-          ) : (
-            <IconDownload size={22} color={colors.accent} />
-          )}
-          <View style={s.exportTextCol}>
-            <Text style={s.exportLabel}>Exporter les données</Text>
-            <Text style={s.exportSub}>Historique complet au format CSV</Text>
-          </View>
+          <Card style={[s.exportRow, isExporting && s.exportRowDisabled]}>
+            {isExporting ? (
+              <ActivityIndicator size="small" color={colors.accent} />
+            ) : (
+              <IconDownload size={22} color={colors.accent} />
+            )}
+            <View style={s.exportTextCol}>
+              <Text style={s.exportLabel}>Exporter les données</Text>
+              <Text style={s.exportSub}>Historique complet au format CSV</Text>
+            </View>
+          </Card>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -169,9 +170,6 @@ const s = StyleSheet.create({
 
   // Champ prénom
   inputBox: {
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: spacing.xl, paddingVertical: 14,
   },
   input: {
@@ -180,8 +178,7 @@ const s = StyleSheet.create({
 
   // Sélecteur objectif
   card: {
-    backgroundColor: colors.card, borderRadius: radius.md,
-    padding: spacing.xl, alignItems: 'center',
+    alignItems: 'center',
   },
 
   // Export
@@ -189,11 +186,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.xl,
   },
   exportRowDisabled: { opacity: 0.5 },
   exportTextCol: { flex: 1 },

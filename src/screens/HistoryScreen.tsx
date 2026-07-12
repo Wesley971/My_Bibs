@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  StyleSheet, SectionList, View, Text, TouchableOpacity, Alert,
+  StyleSheet, SectionList, View, Text, TouchableOpacity, Alert, Platform,
 } from "react-native";
 import Animated, {
   useAnimatedStyle, useSharedValue, withDelay, withTiming,
@@ -19,9 +19,13 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { radius } from "../theme/radius";
 import { typography, fonts } from "../theme/typography";
+import { accentShadowSubtle } from "../theme/shadows";
 import { SkeletonRow } from '../components/SkeletonRow';
 import { QtyBadge } from '../components/QtyBadge';
 import { Toast } from '../components/Toast';
+import { Card } from '../components/Card';
+import { AccentGlow } from '../components/AccentGlow';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type DaySection = { title: string; total: number; pct: number; data: Bottle[] };
@@ -69,7 +73,7 @@ function timeStr(iso: string): string {
 }
 
 // ── BibRow avec Swipeable ──────────────────────────────────────────────────────
-const BibRow = React.memo(function BibRow({ item, onDelete, onPress, index }: { item: Bottle; onDelete: (id: string) => void; onPress: (bottle: Bottle) => void; index: number }) {
+const BibRow = React.memo(function BibRow({ item, onRequestDelete, onPress, index }: { item: Bottle; onRequestDelete: (id: string) => void; onPress: (bottle: Bottle) => void; index: number }) {
   const swipeRef   = useRef<Swipeable>(null);
   const opacity    = useSharedValue(0);
   const translateY = useSharedValue(20);
@@ -90,14 +94,7 @@ const BibRow = React.memo(function BibRow({ item, onDelete, onPress, index }: { 
       style={s.deleteAction}
       onPress={() => {
         swipeRef.current?.close();
-        Alert.alert(
-          'Supprimer ce biberon ?',
-          'Cette action est irréversible.',
-          [
-            { text: 'Annuler', style: 'cancel' },
-            { text: 'Supprimer', style: 'destructive', onPress: () => onDelete(item.id) },
-          ]
-        );
+        onRequestDelete(item.id);
       }}
       accessibilityRole="button"
       accessibilityLabel="Supprimer ce biberon"
@@ -113,7 +110,7 @@ const BibRow = React.memo(function BibRow({ item, onDelete, onPress, index }: { 
       accessibilityActions={[{ name: 'delete', label: 'Supprimer ce biberon' }]}
       onAccessibilityAction={(event) => {
         if (event.nativeEvent.actionName === 'delete') {
-          onDelete(item.id);
+          onRequestDelete(item.id);
         }
       }}
     >
@@ -126,20 +123,23 @@ const BibRow = React.memo(function BibRow({ item, onDelete, onPress, index }: { 
         onSwipeableWillOpen={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
       >
         <TouchableOpacity
-          style={s.bibRow}
           onPress={() => onPress(item)}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Modifier ce biberon"
         >
-          <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
-          <IconBabyBottle size={15} color={colors.muted} />
-          <View style={s.bibInfo}>
-            <Text style={s.bibName}>Biberon</Text>
-            {item.notes ? <Text style={s.bibNote}>{item.notes}</Text> : null}
-          </View>
-          <QtyBadge qty={item.quantity} />
-          <IconChevronRight size={18} color={colors.muted} />
+          <Card style={s.bibRow}>
+            <Text style={s.bibTime}>{timeStr(item.timestamp)}</Text>
+            <View style={s.bibIconCircle}>
+              <IconBabyBottle size={14} color={colors.acL} />
+            </View>
+            <View style={s.bibInfo}>
+              <Text style={s.bibName}>Biberon</Text>
+              {item.notes ? <Text style={s.bibNote}>{item.notes}</Text> : null}
+            </View>
+            <QtyBadge qty={item.quantity} />
+            <IconChevronRight size={18} color={colors.muted} />
+          </Card>
         </TouchableOpacity>
       </Swipeable>
     </Animated.View>
@@ -151,6 +151,7 @@ export default function HistoryScreen({ navigation }: { navigation: HistoryNavig
   const [sections, setSections] = useState<DaySection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -184,6 +185,14 @@ export default function HistoryScreen({ navigation }: { navigation: HistoryNavig
   const handlePress = useCallback((bottle: Bottle) => {
     navigation.navigate('Édition', { bottle });
   }, [navigation]);
+
+  const handleRequestDelete = useCallback((id: string) => setPendingDeleteId(id), []);
+  const cancelDelete = useCallback(() => setPendingDeleteId(null), []);
+  const confirmDelete = useCallback(() => {
+    if (!pendingDeleteId) return;
+    handleDelete(pendingDeleteId);
+    setPendingDeleteId(null);
+  }, [pendingDeleteId, handleDelete]);
 
   return (
     <View style={s.historyRoot}>
@@ -221,22 +230,25 @@ export default function HistoryScreen({ navigation }: { navigation: HistoryNavig
         )}
 
         renderSectionHeader={({ section }) => (
-          <View style={s.dayHeader}>
+          <Card style={s.dayHeader}>
             <Text style={s.dayLabel}>{section.title}</Text>
             <View style={s.miniProgressBg}>
               <View style={[s.miniProgressFill, { width: `${section.pct}%` as any }]} />
             </View>
             <Text style={s.dayPct}>{section.pct}%</Text>
-            <View style={s.dayTotalBadge}>
+            <View style={[s.dayTotalBadge, accentShadowSubtle]}>
+              {Platform.OS === 'android' && (
+                <AccentGlow borderRadius={radius.sm} intensity="subtle" />
+              )}
               <Text style={s.dayTotalText}>{section.total} ml</Text>
             </View>
-          </View>
+          </Card>
         )}
 
         renderItem={({ item, index }) => (
           <BibRow
             item={item}
-            onDelete={handleDelete}
+            onRequestDelete={handleRequestDelete}
             onPress={handlePress}
             index={index}
           />
@@ -246,6 +258,16 @@ export default function HistoryScreen({ navigation }: { navigation: HistoryNavig
         ItemSeparatorComponent={() => <View style={s.itemSep} />}
       />
       <Toast visible={toastVisible}>Biberon supprimé</Toast>
+      <ConfirmDialog
+        visible={pendingDeleteId !== null}
+        title="Supprimer ce biberon ?"
+        message="Cette action est irréversible."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </View>
   );
 }
@@ -274,7 +296,6 @@ const s = StyleSheet.create({
   dayHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 10, paddingHorizontal: 14,
-    backgroundColor: colors.card, borderRadius: radius.md,
     marginBottom: 2,
   },
   dayLabel: { ...typography.small, fontWeight: '700', color: colors.text, flex: 1 },
@@ -293,10 +314,15 @@ const s = StyleSheet.create({
 
   bibRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: colors.card,
     paddingVertical: 11, paddingHorizontal: 13,
   },
   bibTime:    { ...typography.small, color: colors.muted, minWidth: 38 },
+  bibIconCircle: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: colors.accentSubtle,
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
   bibInfo:    { flex: 1 },
   bibName:    { fontFamily: fonts.semiBold, fontSize: 13, fontWeight: '600', color: colors.text },
   bibNote:    { fontSize: 11, color: colors.muted, fontStyle: 'italic', marginTop: 1 },
@@ -309,6 +335,11 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
+    // Seuls les coins droits sont jamais visibles (le gauche reste sous la
+    // card qui glisse par-dessus) — arrondis au même radius.lg que la Card
+    // de la ligne pour que le bord extérieur de la rangée reste cohérent.
+    borderTopRightRadius: radius.lg,
+    borderBottomRightRadius: radius.lg,
   },
   deleteActionText: { ...typography.label, color: colors.textOnAccent },
 });

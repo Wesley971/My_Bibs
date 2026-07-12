@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Platform,
   KeyboardAvoidingView, ScrollView,
 } from "react-native";
 import { IconBabyCarriage, IconBabyBottle, IconArrowRight, IconArrowLeft, IconCircleCheck } from '@tabler/icons-react-native';
@@ -8,10 +8,12 @@ import { saveSettings } from "../storage/settingsStorage";
 import { DAILY_GOAL_DEFAULT } from "../config/constants";
 import { Stepper } from '../components/Stepper';
 import { Button } from '../components/Button';
+import { AccentGlow } from '../components/AccentGlow';
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { radius } from "../theme/radius";
 import { typography, fonts } from "../theme/typography";
+import { accentShadowSubtle } from "../theme/shadows";
 
 type Props = { onDone: () => void };
 
@@ -41,8 +43,16 @@ export default function OnboardingScreen({ onDone }: Props) {
       >
       {/* ── Indicateur d'étapes ── */}
       <View style={s.dots}>
-        <View style={[s.dot, step === 1 && s.dotActive]} />
-        <View style={[s.dot, step === 2 && s.dotActive]} />
+        <View style={[s.dot, step === 1 && s.dotActive, step === 1 && accentShadowSubtle]}>
+          {step === 1 && Platform.OS === 'android' && (
+            <AccentGlow borderRadius={4} intensity="subtle" />
+          )}
+        </View>
+        <View style={[s.dot, step === 2 && s.dotActive, step === 2 && accentShadowSubtle]}>
+          {step === 2 && Platform.OS === 'android' && (
+            <AccentGlow borderRadius={4} intensity="subtle" />
+          )}
+        </View>
       </View>
 
       {step === 1 ? (
@@ -142,7 +152,7 @@ const s = StyleSheet.create({
   step: { alignItems: 'center' },
   title: {
     marginTop: 20,
-    fontFamily: fonts.extraBold, fontSize: 28, fontWeight: '900',
+    fontFamily: fonts.extraBold, fontSize: 28, fontWeight: '800',
     color: colors.text, textAlign: 'center', lineHeight: 34, marginBottom: 10,
   },
   subtitle: {
